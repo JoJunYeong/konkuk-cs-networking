@@ -18,6 +18,7 @@
   const state = {
     event: null,
     submitting: false,
+    managedHistory: null,
   };
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -53,6 +54,44 @@
     { x: "62%", y: "84%", size: "50px", duration: "17s", delay: "-6s" },
     { x: "9%", y: "88%", size: "44px", duration: "19s", delay: "-12s" },
   ];
+
+  async function fetchManagedPayload(documentName) {
+    const runtime = window.KU_ADMIN_FIREBASE;
+    if (!runtime?.firebase?.projectId || !runtime?.firebase?.apiKey) return null;
+
+    const collection = encodeURIComponent(runtime.collection || "siteData");
+    const documentId = encodeURIComponent(runtime.documents?.[documentName] || documentName);
+    const projectId = encodeURIComponent(runtime.firebase.projectId);
+    const apiKey = encodeURIComponent(runtime.firebase.apiKey);
+    const endpoint =
+      `https://firestore.googleapis.com/v1/projects/${projectId}` +
+      `/databases/(default)/documents/${collection}/${documentId}?key=${apiKey}`;
+
+    try {
+      const response = await fetch(endpoint, { cache: "no-store" });
+      if (response.status === 404 || response.status === 403) return null;
+      if (!response.ok) throw new Error(`managed_data_${response.status}`);
+      const documentData = await response.json();
+      const payload = documentData?.fields?.payload?.stringValue;
+      return typeof payload === "string" ? JSON.parse(payload) : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  async function loadManagedData() {
+    const [managedEvents, managedHistory] = await Promise.all([
+      fetchManagedPayload("events"),
+      fetchManagedPayload("history"),
+    ]);
+
+    if (Array.isArray(managedEvents) && managedEvents.length > 0) {
+      config.events = managedEvents;
+    }
+    if (managedHistory?.events && Array.isArray(managedHistory.events)) {
+      state.managedHistory = managedHistory;
+    }
+  }
 
   function applyTheme(theme) {
     const root = document.documentElement;
@@ -227,6 +266,11 @@
   }
 
   async function loadHistory() {
+    if (state.managedHistory) {
+      renderHistory(state.managedHistory);
+      return;
+    }
+
     try {
       const response = await fetch("./data/history.json", { cache: "no-store" });
       if (!response.ok) throw new Error(`history_${response.status}`);
@@ -834,7 +878,8 @@
     return config.events.find((event) => event.featured)?.id || config.events[0].id;
   }
 
-  function initialize() {
+  async function initialize() {
+    await loadManagedData();
     applyTheme(config.theme);
     setSiteContent();
     renderValues();
@@ -863,5 +908,8 @@
     );
   }
 
-  initialize();
+  initialize().catch(() => {
+    document.body.innerHTML =
+      '<main style="padding:40px;font-family:system-ui"><h1>페이지를 불러오지 못했습니다.</h1><p>잠시 뒤 다시 시도해 주세요.</p></main>';
+  });
 })();

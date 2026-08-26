@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#153d32" />
+    <title>관리자 · KU CSE Quarterly</title>
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./assets/admin.css?v=20260827-admin" />
+    <script src="./config/site.config.js?v=20260827-admin"></script>
+    <script src="./config/firebase.config.js?v=20260827-admin"></script>
+    <script type="module" src="./assets/admin.js?v=20260827-admin"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#admin-main">본문으로 건너뛰기</a>
+
+    <header class="admin-header">
+      <a class="admin-brand" href="./index.html">
+        <span class="admin-brand__mark" aria-hidden="true">K</span>
+        <span>
+          <strong>KU CSE QUARTERLY</strong>
+          <small>운영자 화면</small>
+        </span>
+      </a>
+      <a class="plain-link" href="./index.html">공개 페이지 보기</a>
+    </header>
+
+    <main id="admin-main" class="admin-main">
+      <section class="login-panel" id="login-panel" aria-labelledby="login-title">
+        <p class="section-label">ADMINISTRATION</p>
+        <h1 id="login-title">관리자 로그인</h1>
+        <p class="login-copy">행사 일정과 지난 모임 기록을 수정하는 곳입니다.</p>
+
+        <form id="login-form" class="login-form">
+          <label>
+            <span>아이디</span>
+            <input name="username" type="text" autocomplete="username" required />
+          </label>
+          <label>
+            <span>비밀번호</span>
+            <input name="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="admin-button admin-button--primary" type="submit">로그인</button>
+          <p class="form-message" id="login-message" role="status" aria-live="polite"></p>
+        </form>
+
+        <p class="security-note">
+          비밀번호는 이 저장소에 들어 있지 않습니다. Firebase가 로그인 여부만 확인하며, 이 화면은 신청자 개인정보를 다루지 않습니다.
+        </p>
+      </section>
+
+      <section class="dashboard" id="dashboard" hidden aria-labelledby="dashboard-title">
+        <div class="dashboard__heading">
+          <div>
+            <p class="section-label">QUARTERLY OFFICE</p>
+            <h1 id="dashboard-title">모임 관리</h1>
+            <p>저장하면 공개 페이지에 바로 반영됩니다.</p>
+          </div>
+          <div class="dashboard__account">
+            <span id="account-name">관리자</span>
+            <button class="plain-button" id="logout-button" type="button">로그아웃</button>
+          </div>
+        </div>
+
+        <div class="sync-status" id="sync-status" role="status" aria-live="polite">자료를 확인하는 중입니다.</div>
+
+        <nav class="admin-tabs" aria-label="관리 항목">
+          <button class="is-active" type="button" data-admin-tab="events" aria-selected="true">분기별 행사</button>
+          <button type="button" data-admin-tab="history" aria-selected="false">지난 기록</button>
+        </nav>
+
+        <section class="admin-section" id="events-panel" data-admin-panel="events">
+          <div class="record-toolbar">
+            <label>
+              <span>편집할 회차</span>
+              <select id="event-select"></select>
+            </label>
+            <div>
+              <button class="admin-button" id="add-event" type="button">새 분기 추가</button>
+              <button class="admin-button admin-button--danger" id="delete-event" type="button">이 회차 삭제</button>
+            </div>
+          </div>
+
+          <form id="event-form" class="editor-form">
+            <div class="form-grid form-grid--four">
+              <label><span>회차 ID</span><input name="id" required pattern="[0-9]{4}-Q[1-4]" placeholder="2027-Q1" /></label>
+              <label><span>표시 이름</span><input name="quarter" required placeholder="2027 Q1" /></label>
+              <label><span>호수</span><input name="sequence" required maxlength="3" placeholder="05" /></label>
+              <label>
+                <span>상태</span>
+                <select name="status">
+                  <option value="upcoming">예정</option>
+                  <option value="open">신청 가능</option>
+                  <option value="closed">마감</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="form-grid form-grid--two">
+              <label><span>상태 문구</span><input name="statusLabel" required /></label>
+              <label class="checkbox-label"><input name="featured" type="checkbox" /><span>첫 화면에 이 회차 표시</span></label>
+            </div>
+
+            <div class="form-grid form-grid--two">
+              <label><span>큰 제목 첫 줄</span><input name="titleLineOne" required /></label>
+              <label><span>큰 제목 둘째 줄</span><input name="titleLineTwo" required /></label>
+            </div>
+
+            <label><span>짧은 소개</span><textarea name="description" rows="3" required></textarea></label>
+            <label><span>안내 문구</span><input name="notice" required /></label>
+
+            <div class="form-grid form-grid--two">
+              <label><span>날짜</span><input name="dateLabel" required /></label>
+              <label><span>시간</span><input name="time" required /></label>
+              <label><span>장소</span><input name="venue" required /></label>
+              <label><span>상세 주소</span><input name="address" /></label>
+              <label><span>참가비</span><input name="priceLabel" required /></label>
+              <label><span>정원</span><input name="capacity" type="number" min="1" max="999" required /></label>
+            </div>
+
+            <div class="form-grid form-grid--two">
+              <label><span>신청 버튼 문구</span><input name="applicationLabel" required /></label>
+              <label><span>신청 안내</span><input name="applicationCopy" /></label>
+            </div>
+
+            <label><span>모임 소개</span><textarea name="aboutIntro" rows="3"></textarea></label>
+            <label><span>한 줄 문구</span><input name="quote" /></label>
+            <label><span>진행 순서 안내</span><textarea name="programDescription" rows="2"></textarea></label>
+            <label>
+              <span>진행 순서</span>
+              <textarea name="agenda" rows="8" placeholder="19:00 | 도착·이름표 받기 | 도착하는 순서대로 이름표를 받습니다."></textarea>
+              <small>한 줄에 하나씩 ‘시간 | 제목 | 설명’ 순서로 적어 주세요.</small>
+            </label>
+
+            <div class="form-actions">
+              <button class="admin-button admin-button--primary" type="submit">분기별 행사 저장</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="admin-section" id="history-panel" data-admin-panel="history" hidden>
+          <div class="record-toolbar">
+            <label>
+              <span>편집할 기록</span>
+              <select id="history-select"></select>
+            </label>
+            <div>
+              <button class="admin-button" id="add-history" type="button">지난 기록 추가</button>
+              <button class="admin-button admin-button--danger" id="delete-history" type="button">이 기록 삭제</button>
+            </div>
+          </div>
+
+          <form id="history-form" class="editor-form">
+            <div class="form-grid form-grid--four">
+              <label><span>기록 ID</span><input name="id" required /></label>
+              <label><span>회차</span><input name="sequence" type="number" min="1" required /></label>
+              <label><span>날짜</span><input name="date" type="date" required /></label>
+              <label><span>참여 인원</span><input name="attendees" type="number" min="0" max="999" required /></label>
+            </div>
+            <label><span>행사 제목</span><input name="title" required /></label>
+            <label><span>장소</span><input name="venue" required /></label>
+            <label><span>공개용 설명</span><textarea name="summary" rows="4" required></textarea></label>
+            <label><span>주요 순서</span><input name="highlights" placeholder="졸업 프로젝트 발표, 취업 질문, 자유 대화" /></label>
+            <label><span>운영 메모</span><textarea name="learning" rows="3"></textarea></label>
+
+            <div class="privacy-warning">
+              이름, 연락처, 이메일, 계좌번호, 참석자 사진은 이 자료에 넣지 마세요.
+            </div>
+            <div class="form-actions">
+              <button class="admin-button admin-button--primary" type="submit">지난 기록 저장</button>
+            </div>
+          </form>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

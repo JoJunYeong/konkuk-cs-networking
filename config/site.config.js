@@ -15,7 +15,7 @@ window.NETWORKING_SITE_CONFIG = {
     contactEmail: "organizer@example.com",
     unofficialNotice:
       "건국대학교 공식 행사가 아닌 동문 주도 프로젝트이며, 움직이는 K/KU 마크는 이 페이지 전용 비공식 그래픽입니다.",
-    shareText: "건국 컴퓨터공학 동문 네트워킹 데이에 함께해요.",
+    shareText: "건국대 컴공 선후배가 분기마다 모입니다. 이번 모임에서 만나요.",
   },
 
   theme: {
@@ -130,53 +130,53 @@ window.NETWORKING_SITE_CONFIG = {
   values: [
     {
       number: "01",
-      title: "현업의 맥락",
-      description: "직함보다 실제로 풀고 있는 문제와 시행착오를 나눕니다.",
+      title: "요즘 하는 일",
+      description: "회사나 학교에서 맡고 있는 일, 막혔던 일, 잘된 일을 나눕니다.",
     },
     {
       number: "02",
-      title: "느슨한 연결",
-      description: "당장 목적이 없어도 다음에 편하게 연락할 수 있는 사이를 만듭니다.",
+      title: "선후배에게 묻기",
+      description: "취업, 대학원, 창업처럼 혼자 알아보기 어려운 이야기를 편하게 물어봅니다.",
     },
     {
       number: "03",
-      title: "분기별 운영",
-      description: "한 번의 행사로 끝내지 않고, 기록과 회고를 다음 분기에 이어갑니다.",
+      title: "석 달에 한 번",
+      description: "부담스럽게 자주 모이지 않고, 한 분기에 한 번 안부를 잇습니다.",
     },
   ],
 
   audience: [
-    "건국대학교 컴퓨터공학 편입생·재학생·졸업생과 만나고 싶은 분",
-    "커리어 전환, 채용, 창업에 관한 현실적인 경험을 듣고 싶은 분",
-    "후배에게 시행착오를 나누거나 선배에게 질문하고 싶은 분",
-    "분기마다 가볍게 돌아올 수 있는 동문 커뮤니티를 찾는 분",
+    "건국대학교 컴퓨터공학과 선후배를 만나고 싶은 분",
+    "취업, 이직, 대학원, 창업 이야기를 직접 듣고 싶은 분",
+    "후배에게 경험을 나누거나 선배에게 궁금한 점을 묻고 싶은 분",
+    "오랜만에 학교 사람들과 편하게 저녁을 먹고 싶은 분",
   ],
 
   defaultFaq: [
     {
       question: "컴퓨터공학과 졸업생만 신청할 수 있나요?",
       answer:
-        "운영 기준에 따라 재학생·복수전공·관련 학과 동문까지 범위를 조정할 수 있습니다. 실제 공개 전 참가 자격을 확정해 문구를 수정해 주세요.",
+        "편입생을 중심으로 시작했지만, 건국대학교 컴퓨터공학과와 인연이 있는 재학생과 졸업생도 신청할 수 있습니다.",
     },
     {
       question: "신청만 하면 참여가 확정되나요?",
       answer:
-        "유료 회차는 결제 승인까지 완료되어야 참여가 확정됩니다. 개인 송금은 자동 확인되지 않으므로 예외 상황에서만 운영자가 수동 처리합니다.",
+        "아닙니다. 유료 회차는 참가비까지 확인된 뒤에 확정 메시지를 보내드립니다.",
     },
     {
       question: "퇴근 후 조금 늦게 도착해도 되나요?",
       answer:
-        "회차별 공식 프로그램 시작 시각을 신청 페이지에 따로 안내합니다. 늦게 합류할 수 있는 범위도 실제 일정이 확정되면 함께 표시합니다.",
+        "회차마다 다릅니다. 늦게 와도 되는 시간은 일정이 정해지는 대로 신청 페이지에 적어두겠습니다.",
     },
     {
       question: "취소와 환불은 어떻게 하나요?",
       answer:
-        "회차별 환불 마감일과 수수료 기준을 실제 결제 페이지에 반드시 명시해야 합니다. 현재 화면은 예시이며 운영 정책 확정 후 교체합니다.",
+        "환불 마감일과 방법은 참가비를 받기 전에 신청 페이지에서 먼저 안내하겠습니다. 지금은 일정과 참가비가 확정되지 않았습니다.",
     },
     {
       question: "참가자 정보는 다른 사람에게 공개되나요?",
       answer:
-        "프로필 공유에 별도로 동의한 참가자의 최소 정보만 네트워킹 목적으로 제공합니다. 선택 동의하지 않아도 행사 신청에는 영향이 없습니다.",
+        "아닙니다. 참가자 소개는 따로 동의한 분의 최소 정보만 행사 당일에 공유합니다. 동의하지 않아도 신청할 수 있습니다.",
     },
   ],
 
@@ -189,9 +189,9 @@ window.NETWORKING_SITE_CONFIG = {
       statusLabel: "마감",
       featured: false,
       eyebrow: "KONKUK CSE ALUMNI · QUARTER 02",
-      titleLineOne: "두 번째 분기,",
-      titleLineTwo: "더 넓어진 연결.",
-      description: "지난 회차 예시입니다. 회차별 소개와 프로그램을 별도로 보관할 수 있습니다.",
+      titleLineOne: "지난 2분기에는",
+      titleLineTwo: "이렇게 만났습니다.",
+      description: "지난 회차의 일정과 진행 순서를 확인할 수 있습니다.",
       notice: "지난 회차 · 예시 데이터",
       dateLabel: "지난 회차",
       time: "종료",
@@ -200,12 +200,12 @@ window.NETWORKING_SITE_CONFIG = {
       priceLabel: "마감",
       capacity: 50,
       applicationLabel: "신청 마감",
-      programDescription: "지난 회차 프로그램 예시입니다.",
+      programDescription: "지난 회차에 진행한 순서입니다.",
       agenda: [
-        { time: "18:30", title: "체크인", description: "이름표와 대화 카드를 받고 가볍게 인사합니다." },
-        { time: "19:00", title: "라이트닝 토크", description: "동문 3명이 최근의 도전과 배움을 짧게 공유합니다." },
-        { time: "19:40", title: "테이블 네트워킹", description: "관심 주제별로 자리를 옮기며 대화합니다." },
-        { time: "21:00", title: "클로징", description: "다음 분기의 주제를 제안하고 자유롭게 마무리합니다." },
+        { time: "18:30", title: "도착·이름표 받기", description: "이름표를 받고 먼저 온 사람들과 인사합니다." },
+        { time: "19:00", title: "선배 세 사람 이야기", description: "최근 맡은 일과 시행착오를 짧게 들었습니다." },
+        { time: "19:40", title: "주제별 대화", description: "관심 있는 주제의 테이블로 옮겨 이야기했습니다." },
+        { time: "21:00", title: "마무리", description: "다음 모임에서 다룰 이야기를 받고 자유롭게 마쳤습니다." },
       ],
     },
     {
@@ -216,11 +216,11 @@ window.NETWORKING_SITE_CONFIG = {
       statusLabel: "신청 가능",
       featured: true,
       eyebrow: "KONKUK CSE ALUMNI · QUARTER 03",
-      titleLineOne: "전공을 지나,",
-      titleLineTwo: "서로의 다음을 잇는 밤.",
+      titleLineOne: "건국대 컴공 사람들,",
+      titleLineTwo: "이번 분기에도 만나요.",
       description:
-        "컴퓨터공학을 공통점으로 만난 편입생·재학생·졸업생이 분기에 한 번 모여 지금의 일과 다음 선택을 나눕니다.",
-      notice: "분기 1회 운영 · 날짜와 장소는 현재 예시안",
+        "편입생, 재학생, 졸업생이 한자리에 모여 학교 이야기와 요즘 하는 일을 나눕니다. 처음 오셔도 괜찮습니다.",
+      notice: "동문이 직접 준비하는 비공식 모임 · 날짜와 장소는 확정 전입니다.",
       dateLabel: "2026년 9월 17일(목) · 예시안",
       time: "19:00 입장 · 19:30 시작",
       venue: "건대입구 인근 · 장소 협의 중",
@@ -228,18 +228,18 @@ window.NETWORKING_SITE_CONFIG = {
       priceLabel: "참가비 확정 전",
       capacity: 60,
       applicationLabel: "참가 신청하기",
-      applicationCopy: "신청 정보를 입력한 뒤 결제가 확인되면 참여가 확정됩니다.",
+      applicationCopy: "아래 내용을 보내고 참가비가 확인되면 자리를 확정해 드립니다.",
       aboutIntro:
-        "편입과 컴퓨터공학이라는 공통점에서 출발해 학교생활, 프로젝트, 취업과 현업의 시행착오를 나눕니다. 처음 온 사람도 다음 연락으로 이어질 대화를 하나씩 남기는 것이 목표입니다.",
-      quote: "지금 필요한 건 완벽한 소개가 아니라, 다음 대화를 시작할 한 사람일지도 모릅니다.",
-      programDescription: "누구를 만날 수 있는지 미리 알고, 처음 온 사람도 실제 연결을 하나씩 남기도록 흐름을 설계합니다.",
+        "학교생활, 프로젝트, 취업, 회사에서 겪은 일을 편하게 나눕니다. 발표를 잘하거나 아는 사람이 많지 않아도 됩니다.",
+      quote: "선후배끼리 얼굴 한 번 보고, 다음에 연락할 수 있으면 충분합니다.",
+      programDescription: "퇴근하거나 수업을 마치고 오는 시간을 생각해, 늦게 도착해도 합류할 수 있게 진행합니다.",
       agenda: [
-        { time: "19:00", title: "체크인 & 웰컴푸드", description: "먼 곳에서 퇴근한 동문도 천천히 도착해 이름표를 받고 첫 대화를 엽니다." },
-        { time: "19:30", title: "공식 오프닝", description: "오늘 만날 사람과 대화 규칙을 짧게 소개합니다." },
-        { time: "19:40", title: "동문 스포트라이트", description: "현업·연구·창업의 경험과 지금 풀고 있는 문제를 나눕니다." },
-        { time: "20:20", title: "큐레이션 네트워킹", description: "커리어, 기술, 창업 등 관심사별로 자리를 옮기며 깊게 대화합니다." },
-        { time: "21:30", title: "공식 종료 & 자유 대화", description: "연락을 이어갈 사람을 확인하고 희망자는 조금 더 이야기합니다." },
-        { time: "22:00", title: "전체 마무리", description: "다음 분기 제안과 운영 피드백을 남기고 안전하게 귀가합니다." },
+        { time: "19:00", title: "도착·이름표 받기", description: "도착하는 순서대로 이름표를 받고 간단히 식사합니다." },
+        { time: "19:30", title: "모임 안내", description: "오늘 순서와 참석자를 짧게 소개합니다." },
+        { time: "19:40", title: "선배 세 사람 이야기", description: "회사, 연구, 창업 현장에서 겪은 일을 듣습니다." },
+        { time: "20:20", title: "주제별 대화", description: "커리어, 기술, 창업 등 관심 있는 테이블에서 이야기합니다." },
+        { time: "21:30", title: "자유 대화", description: "자리를 옮겨 더 이야기하거나 먼저 귀가해도 됩니다." },
+        { time: "22:00", title: "마무리", description: "다음 모임에서 듣고 싶은 주제를 받고 마칩니다." },
       ],
     },
     {
@@ -250,9 +250,9 @@ window.NETWORKING_SITE_CONFIG = {
       statusLabel: "예정",
       featured: false,
       eyebrow: "KONKUK CSE ALUMNI · QUARTER 04",
-      titleLineOne: "올해의 마지막,",
-      titleLineTwo: "다음 해를 먼저 만나는 밤.",
-      description: "Q4 회차는 Q3 행사 종료 후 참가자 제안을 반영해 주제와 일정을 공개합니다.",
+      titleLineOne: "연말 모임을",
+      titleLineTwo: "준비하고 있습니다.",
+      description: "Q3 모임이 끝난 뒤 받은 의견을 보고 주제와 일정을 정하겠습니다.",
       notice: "분기 1회 운영 · 알림 신청 기능은 추후 연결",
       dateLabel: "2026년 4분기 · 예시안",
       time: "19:00 입장 · 19:30 시작",
@@ -261,10 +261,10 @@ window.NETWORKING_SITE_CONFIG = {
       priceLabel: "추후 공개",
       capacity: 60,
       applicationLabel: "오픈 예정",
-      programDescription: "Q3 피드백을 반영해 프로그램을 확정합니다.",
+      programDescription: "일정과 순서는 Q3 모임 뒤에 정하겠습니다.",
       agenda: [
-        { time: "TBA", title: "연말 동문 라운드업", description: "올해의 배움과 내년의 계획을 함께 정리합니다." },
-        { time: "TBA", title: "Q4 테이블 토크", description: "참가자 제안 중 가장 많이 선택된 주제로 대화합니다." },
+        { time: "미정", title: "올해 있었던 일", description: "올해 학교와 직장에서 겪은 일을 돌아봅니다." },
+        { time: "미정", title: "테이블 대화", description: "Q3 참가자들이 많이 고른 주제로 이야기합니다." },
       ],
     },
   ],

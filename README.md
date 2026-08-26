@@ -2,7 +2,7 @@
 
 건국대학교 컴퓨터공학 편입생·재학생·졸업생 네트워킹 데이를 분기마다 운영하기 위한 행사 페이지입니다. 2023년 실제 운영 기록을 개인정보 없이 정리한 아카이브와 동문회 회보를 닮은 편집형 디자인을 함께 담았습니다.
 
-현재는 안전한 `preview` 모드입니다. 신청 폼의 화면 검증만 수행하며 개인정보 저장, 결제, 카카오 메시지 발송은 일어나지 않습니다.
+현재 참가 신청은 안전한 `preview` 모드입니다. 신청 폼의 화면 검증만 수행하며 개인정보 저장, 결제, 카카오 메시지 발송은 일어나지 않습니다. 행사 일정과 지난 기록은 별도의 관리자 화면에서 운영할 수 있습니다.
 
 ## 바로 미리보기
 
@@ -15,7 +15,7 @@ python3 -m http.server 4173
 
 ## 커스텀하는 곳
 
-대부분의 변경은 [`config/site.config.js`](./config/site.config.js) 한 파일에서 끝납니다.
+공개 페이지의 행사 일정과 지난 기록은 `/admin.html`에서 관리합니다. 색상, 신청 문항, 결제 방식처럼 구조에 가까운 설정은 [`config/site.config.js`](./config/site.config.js)에서 바꿉니다.
 
 - `site`: 행사명, 운영 문의, 공유 문구
 - `theme`: 포인트·배경·본문 색상
@@ -27,9 +27,25 @@ python3 -m http.server 4173
 
 미리보기 상단의 `화면에서 커스텀`을 누르면 제목, 일정, 장소, 참가비, 정원, 색상과 움직이는 마크를 즉석에서 바꾸고 JSON을 복사할 수 있습니다. 마크는 이 페이지 전용 비공식 그래픽이며, 움직임은 `활발하게`, `살랑살랑`, `멈춤` 중에서 고를 수 있습니다. 이 변경은 브라우저에만 적용되며 파일을 자동 수정하지 않습니다.
 
-지난 행사는 [`data/history.json`](./data/history.json)에서 바로 수정할 수 있습니다. 제목, 날짜, 장소, 참여 인원, 공개용 요약, 핵심 프로그램, 회고 메모를 지원합니다.
+[`data/history.json`](./data/history.json)은 Firestore 자료가 없거나 불러오지 못했을 때 보여줄 정적 예비본입니다.
 
-## 새 분기 추가
+## 관리자 화면
+
+공개 주소 뒤에 `/admin.html`을 붙여 접속합니다. Firebase Authentication으로 로그인하며 비밀번호는 저장소, HTML, JavaScript 어디에도 저장하지 않습니다.
+
+관리자 화면에서 할 수 있는 일:
+
+- 새 분기 행사 추가, 수정, 목록 제외
+- 첫 화면에 표시할 회차 선택
+- 일정, 장소, 참가비, 정원, 진행 순서 수정
+- 지난 행사 기록 추가, 수정, 목록 제외
+- 저장 직후 공개 페이지 반영
+
+Firebase 연결, 보안 규칙, 계정 교체 방법은 [`docs/admin.md`](./docs/admin.md)에 정리했습니다.
+
+## 코드에서 새 분기 추가
+
+일반 운영은 관리자 화면을 사용하면 됩니다. 아래는 Firestore 자료가 아직 없을 때 쓰는 정적 예비본을 코드에서 바꾸는 방법입니다.
 
 1. `config/site.config.js`의 `events` 객체 하나를 복사합니다.
 2. `id`를 `2027-Q1`처럼 고유하게 바꿉니다.
@@ -39,9 +55,11 @@ python3 -m http.server 4173
 
 `?quarter=2026-Q4`처럼 URL에 회차를 넣으면 해당 회차를 바로 공유할 수 있습니다.
 
-## Notion에서 지난 기록 관리
+## Notion에서 지난 기록 가져오기
 
-Notion을 공개 사이트에서 직접 fetch하지 않습니다. GitHub Action이 매주 월요일과 수동 실행 시 `공개` 체크된 행만 읽어 정적 JSON으로 저장합니다.
+Notion을 공개 사이트에서 직접 fetch하지 않습니다. 선택 사항인 GitHub Action이 `공개` 체크된 행만 읽어 정적 예비본인 `data/history.json`으로 저장합니다.
+
+관리자 화면에서 한 번이라도 지난 기록을 저장하면 Firestore 자료가 공개 페이지의 기준이 됩니다. 그 뒤 Notion Action을 실행해도 운영 중인 Firestore 자료를 덮어쓰지 않습니다. 평소에는 관리자 화면 하나를 기준으로 쓰고, Notion은 과거 자료 정리나 예비본 생성에만 사용하는 편이 단순합니다.
 
 1. Notion DB에 `공개`, `장소`, `참여 인원`, `요약`, `핵심 프로그램`, `공개 회고` 속성을 추가합니다.
 2. 읽기 전용 Internal connection을 DB에 공유합니다.
@@ -119,7 +137,10 @@ CSS·설정·JavaScript를 바꿔 재배포할 때는 기존 방문자의 GitHub
 ```text
 .
 ├── index.html
+├── admin.html
 ├── assets/
+│   ├── admin.css
+│   ├── admin.js
 │   ├── app.js
 │   └── styles.css
 ├── data/
@@ -129,8 +150,12 @@ CSS·설정·JavaScript를 바꿔 재배포할 때는 기존 방문자의 GitHub
 ├── .github/workflows/
 │   └── sync-notion.yml
 ├── config/
+│   ├── firebase.config.js
 │   └── site.config.js
+├── firebase.json
+├── firestore.rules
 └── docs/
+    ├── admin.md
     ├── design-research.md
     ├── notion-sync.md
     └── payment-message-flow.md

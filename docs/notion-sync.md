@@ -4,12 +4,14 @@
 
 브라우저가 Notion을 매번 직접 읽는 방식보다 아래 구조가 안전하고 안정적이다.
 
-`Notion DB → 주 1회·수동 GitHub Action → data/history.json → GitHub Pages`
+`Notion DB → 주 1회·수동 GitHub Action → data/history.json → GitHub Pages의 예비본`
 
 - Notion 토큰이 방문자 브라우저나 저장소에 노출되지 않는다.
 - Notion 장애, CORS, 공개 페이지 HTML 변경이 사이트 로딩에 영향을 주지 않는다.
 - 어떤 내용이 공개됐는지 Git commit으로 확인하고 되돌릴 수 있다.
 - 분기 행사에는 실시간 동기화가 필요하지 않으므로 주 1회면 충분하다. 수정 직후에는 수동 실행할 수 있다.
+
+현재 운영 자료의 기본 편집기는 `/admin.html`이다. 관리자 화면에서 Firestore에 지난 기록이 저장돼 있으면 공개 페이지는 그 자료를 먼저 사용한다. 이 Action은 Firestore를 덮어쓰지 않으며 `data/history.json` 예비본만 갱신한다. 두 곳을 동시에 원본으로 쓰지 말고, 평소에는 관리자 화면을 기준으로 운영한다.
 
 ## 현재 구현
 

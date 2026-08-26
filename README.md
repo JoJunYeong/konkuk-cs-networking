@@ -80,6 +80,8 @@ registration: {
 
 이 프로젝트는 빌드 과정이나 패키지 설치가 없는 정적 사이트입니다.
 
+CSS·설정·JavaScript를 바꿔 재배포할 때는 기존 방문자의 GitHub Pages 캐시가 남지 않도록 `index.html`의 `?v=` 배포 버전도 함께 올립니다.
+
 1. 이 폴더를 별도 GitHub 저장소에 올립니다.
 2. 저장소 `Settings → Pages`에서 `Deploy from a branch`를 선택합니다.
 3. `main` 브랜치와 `/ (root)`를 선택합니다.

@@ -395,7 +395,214 @@ summary:focus-visible {
   background: transparent;
 }
 
+.floating-marks {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.floating-mark {
+  position: absolute;
+  top: var(--mark-y);
+  left: var(--mark-x);
+  width: var(--mark-size);
+  aspect-ratio: 1;
+  opacity: 0.9;
+  will-change: transform;
+  animation-duration: var(--mark-duration);
+  animation-delay: var(--mark-delay);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.floating-mark--path-1 {
+  animation-name: ku-mark-wander-one;
+}
+
+.floating-mark--path-2 {
+  animation-name: ku-mark-wander-two;
+}
+
+.floating-mark--path-3 {
+  animation-name: ku-mark-wander-three;
+}
+
+.floating-marks[data-motion="gentle"] .floating-mark {
+  opacity: 0.72;
+  animation-duration: calc(var(--mark-duration) + 7s);
+}
+
+.floating-marks[data-motion="still"] .floating-mark {
+  animation: none;
+}
+
+.floating-mark__face {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 42% 58% 51% 49% / 49% 43% 57% 51%;
+  background: rgba(255, 253, 247, 0.94);
+  box-shadow:
+    0 14px 35px rgba(2, 17, 12, 0.2),
+    inset -6px -8px 14px rgba(18, 60, 47, 0.09);
+  color: var(--forest);
+  place-items: center;
+  transform-origin: 50% 70%;
+  animation: ku-mark-bob 2.8s ease-in-out infinite alternate;
+}
+
+.floating-mark:nth-child(3n + 2) .floating-mark__face {
+  border-color: color-mix(in srgb, var(--accent) 76%, white);
+  background: color-mix(in srgb, var(--accent) 91%, white);
+  color: #1d1b16;
+}
+
+.floating-mark:nth-child(3n) .floating-mark__face {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: color-mix(in srgb, var(--forest) 87%, white);
+  color: var(--white);
+}
+
+.floating-mark:nth-child(even) .floating-mark__face {
+  border-radius: 55% 45% 42% 58% / 45% 54% 46% 55%;
+  animation-delay: -1.4s;
+}
+
+.floating-mark__face::before,
+.floating-mark__face::after {
+  position: absolute;
+  bottom: -5%;
+  width: 23%;
+  height: 18%;
+  border: inherit;
+  border-top: 0;
+  border-radius: 0 0 999px 999px;
+  background: inherit;
+  content: "";
+}
+
+.floating-mark__face::before {
+  left: 18%;
+  transform: rotate(9deg);
+}
+
+.floating-mark__face::after {
+  right: 18%;
+  transform: rotate(-9deg);
+}
+
+.floating-mark__eyes {
+  position: absolute;
+  top: 23%;
+  left: 50%;
+  display: flex;
+  gap: clamp(3px, 0.45vw, 6px);
+  transform: translateX(-50%);
+}
+
+.floating-mark__eyes i {
+  width: clamp(2px, 0.26vw, 4px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.floating-mark__glyph {
+  padding-top: 6%;
+  font-size: clamp(16px, calc(var(--mark-size) * 0.34), 27px);
+  font-weight: 950;
+  letter-spacing: -0.09em;
+  line-height: 1;
+}
+
+.floating-mark__glyph--small {
+  font-size: clamp(10px, calc(var(--mark-size) * 0.23), 17px);
+  letter-spacing: -0.04em;
+}
+
+.floating-mark__smile {
+  position: absolute;
+  bottom: 21%;
+  left: 50%;
+  width: 18%;
+  height: 9%;
+  border-bottom: 2px solid currentColor;
+  border-radius: 0 0 999px 999px;
+  transform: translateX(-50%);
+}
+
+@keyframes ku-mark-wander-one {
+  0% {
+    transform: translate3d(-9px, 8px, 0) rotate(-12deg);
+  }
+
+  32% {
+    transform: translate3d(30px, -21px, 0) rotate(6deg);
+  }
+
+  67% {
+    transform: translate3d(46px, 24px, 0) rotate(14deg);
+  }
+
+  100% {
+    transform: translate3d(5px, 39px, 0) rotate(-5deg);
+  }
+}
+
+@keyframes ku-mark-wander-two {
+  0% {
+    transform: translate3d(12px, -8px, 0) rotate(9deg);
+  }
+
+  38% {
+    transform: translate3d(-34px, 20px, 0) rotate(-13deg);
+  }
+
+  72% {
+    transform: translate3d(17px, 42px, 0) rotate(3deg);
+  }
+
+  100% {
+    transform: translate3d(40px, 3px, 0) rotate(15deg);
+  }
+}
+
+@keyframes ku-mark-wander-three {
+  0% {
+    transform: translate3d(-5px, 19px, 0) rotate(-4deg);
+  }
+
+  30% {
+    transform: translate3d(24px, 38px, 0) rotate(13deg);
+  }
+
+  64% {
+    transform: translate3d(-38px, 6px, 0) rotate(-15deg);
+  }
+
+  100% {
+    transform: translate3d(10px, -28px, 0) rotate(7deg);
+  }
+}
+
+@keyframes ku-mark-bob {
+  from {
+    transform: translateY(-3px) scale(0.98);
+  }
+
+  to {
+    transform: translateY(4px) scale(1.02);
+  }
+}
+
 .hero__inner {
+  position: relative;
+  z-index: 2;
   display: grid;
   min-height: 678px;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
@@ -1409,6 +1616,8 @@ summary:focus-visible {
 .customizer {
   width: min(620px, calc(100vw - 32px));
   padding: 38px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .customizer__header {
@@ -1448,9 +1657,19 @@ summary:focus-visible {
   font-weight: 720;
 }
 
-.customizer input {
+.customizer input,
+.customizer select {
+  width: 100%;
   height: 48px;
   padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.customizer select:hover {
+  border-color: color-mix(in srgb, var(--ink) 37%, transparent);
 }
 
 .customizer input[type="color"] {
@@ -1510,6 +1729,45 @@ summary:focus-visible {
   .hero__orb--one {
     top: 130px;
     right: -70px;
+  }
+
+  .floating-mark:nth-child(1) {
+    --mark-x: 5% !important;
+    --mark-y: 9% !important;
+  }
+
+  .floating-mark:nth-child(2) {
+    --mark-x: 76% !important;
+    --mark-y: 6% !important;
+  }
+
+  .floating-mark:nth-child(3) {
+    --mark-x: 84% !important;
+    --mark-y: 34% !important;
+  }
+
+  .floating-mark:nth-child(4) {
+    --mark-x: 8% !important;
+    --mark-y: 54% !important;
+  }
+
+  .floating-mark:nth-child(5) {
+    --mark-x: 70% !important;
+    --mark-y: 69% !important;
+  }
+
+  .floating-mark:nth-child(6) {
+    --mark-x: 14% !important;
+    --mark-y: 87% !important;
+  }
+
+  .floating-mark:nth-child(7) {
+    --mark-x: 83% !important;
+    --mark-y: 91% !important;
+  }
+
+  .floating-mark:nth-child(8) {
+    display: none;
   }
 
   .about__grid,
@@ -1599,6 +1857,39 @@ summary:focus-visible {
     width: 190px;
     height: 190px;
     opacity: 0.55;
+  }
+
+  .floating-mark {
+    opacity: 0.62;
+  }
+
+  .floating-mark:nth-child(1) {
+    --mark-x: 78% !important;
+    --mark-y: 4% !important;
+  }
+
+  .floating-mark:nth-child(2) {
+    --mark-x: -12% !important;
+    --mark-y: 55% !important;
+  }
+
+  .floating-mark:nth-child(3) {
+    --mark-x: 91% !important;
+    --mark-y: 48% !important;
+  }
+
+  .floating-mark:nth-child(4) {
+    --mark-x: -11% !important;
+    --mark-y: 63% !important;
+  }
+
+  .floating-mark:nth-child(5) {
+    --mark-x: 89% !important;
+    --mark-y: 86% !important;
+  }
+
+  .floating-mark:nth-child(n + 6) {
+    display: none;
   }
 
   .hero__lead {
@@ -1795,5 +2086,11 @@ summary:focus-visible {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+
+  .floating-mark,
+  .floating-mark__face {
+    animation: none !important;
+    transform: none !important;
   }
 }

@@ -40,7 +40,19 @@
     resultDialog: $("#result-dialog"),
     customizerDialog: $("#customizer-dialog"),
     customizerForm: $("#customizer-form"),
+    floatingMarks: $("#floating-marks"),
   };
+
+  const markPlacements = [
+    { x: "-1%", y: "13%", size: "70px", duration: "11s", delay: "-2s" },
+    { x: "43%", y: "7%", size: "52px", duration: "13s", delay: "-8s" },
+    { x: "88%", y: "13%", size: "82px", duration: "12s", delay: "-5s" },
+    { x: "58%", y: "48%", size: "62px", duration: "10s", delay: "-7s" },
+    { x: "3%", y: "73%", size: "56px", duration: "14s", delay: "-10s" },
+    { x: "69%", y: "83%", size: "74px", duration: "12s", delay: "-4s" },
+    { x: "91%", y: "66%", size: "54px", duration: "9s", delay: "-6s" },
+    { x: "54%", y: "88%", size: "44px", duration: "13s", delay: "-11s" },
+  ];
 
   function applyTheme(theme) {
     const root = document.documentElement;
@@ -109,6 +121,54 @@
       const li = document.createElement("li");
       li.textContent = item;
       list.append(li);
+    });
+  }
+
+  function renderFloatingMarks() {
+    const marks = config.decorations?.floatingMarks;
+    elements.floatingMarks.replaceChildren();
+
+    if (!marks?.enabled || !Array.isArray(marks.labels) || marks.labels.length === 0) {
+      elements.floatingMarks.hidden = true;
+      return;
+    }
+
+    elements.floatingMarks.hidden = false;
+    elements.floatingMarks.dataset.motion = ["lively", "gentle", "still"].includes(marks.motion)
+      ? marks.motion
+      : "lively";
+
+    marks.labels.slice(0, markPlacements.length).forEach((rawLabel, index) => {
+      const label = String(rawLabel).trim().slice(0, 4);
+      if (!label) return;
+
+      const placement = markPlacements[index];
+      const mark = document.createElement("span");
+      mark.className = `floating-mark floating-mark--path-${(index % 3) + 1}`;
+      mark.style.setProperty("--mark-x", placement.x);
+      mark.style.setProperty("--mark-y", placement.y);
+      mark.style.setProperty("--mark-size", placement.size);
+      mark.style.setProperty("--mark-duration", placement.duration);
+      mark.style.setProperty("--mark-delay", placement.delay);
+
+      const face = document.createElement("span");
+      face.className = "floating-mark__face";
+
+      const eyes = document.createElement("span");
+      eyes.className = "floating-mark__eyes";
+      eyes.append(document.createElement("i"), document.createElement("i"));
+
+      const glyph = document.createElement("span");
+      glyph.className = "floating-mark__glyph";
+      if (label.length > 2) glyph.classList.add("floating-mark__glyph--small");
+      glyph.textContent = label;
+
+      const smile = document.createElement("span");
+      smile.className = "floating-mark__smile";
+
+      face.append(eyes, glyph, smile);
+      mark.append(face);
+      elements.floatingMarks.append(mark);
     });
   }
 
@@ -565,6 +625,8 @@
     form.elements.capacity.value = state.event.capacity;
     form.elements.accent.value = toHex(config.theme.accent, "#ff6b35");
     form.elements.paper.value = toHex(config.theme.paper, "#f4f0e7");
+    form.elements.markLabels.value = (config.decorations?.floatingMarks?.labels || []).join(", ");
+    form.elements.markMotion.value = config.decorations?.floatingMarks?.motion || "lively";
     setText("#customizer-message", "변경 내용은 현재 브라우저 미리보기에만 적용됩니다.");
     openDialog(elements.customizerDialog);
   }
@@ -594,8 +656,23 @@
     state.event.capacity = Math.max(1, Number(data.get("capacity")) || 1);
     config.theme.accent = String(data.get("accent") || config.theme.accent);
     config.theme.paper = String(data.get("paper") || config.theme.paper);
+    const markLabels = String(data.get("markLabels") || "")
+      .split(",")
+      .map((label) => label.trim())
+      .filter(Boolean)
+      .slice(0, markPlacements.length);
+    config.decorations ??= {};
+    config.decorations.floatingMarks ??= {};
+    config.decorations.floatingMarks.enabled = markLabels.length > 0;
+    config.decorations.floatingMarks.labels = markLabels;
+    config.decorations.floatingMarks.motion = ["lively", "gentle", "still"].includes(
+      String(data.get("markMotion")),
+    )
+      ? String(data.get("markMotion"))
+      : "lively";
 
     applyTheme(config.theme);
+    renderFloatingMarks();
     updateEventContent();
     setText("#customizer-message", "미리보기에 적용했습니다. JSON을 복사해 설정 파일에 반영할 수 있습니다.");
   }
@@ -606,6 +683,7 @@
         accent: config.theme.accent,
         paper: config.theme.paper,
       },
+      decorations: config.decorations,
       event: state.event,
     };
     const serialized = JSON.stringify(exportData, null, 2);
@@ -644,6 +722,7 @@
     setSiteContent();
     renderValues();
     renderAudience();
+    renderFloatingMarks();
     renderFields();
     initializeDialogs();
     initializeEvents();

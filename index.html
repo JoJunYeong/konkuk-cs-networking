@@ -51,6 +51,7 @@
         <div class="hero__grid" aria-hidden="true"></div>
         <div class="hero__orb hero__orb--one" aria-hidden="true"></div>
         <div class="hero__orb hero__orb--two" aria-hidden="true"></div>
+        <div class="floating-marks" id="floating-marks" aria-hidden="true"></div>
 
         <div class="page-shell hero__inner">
           <div class="hero__main">
@@ -329,6 +330,18 @@
             <input name="paper" type="color" />
           </label>
         </div>
+        <label>
+          <span>떠다니는 마크 문구 · 쉼표로 구분</span>
+          <input name="markLabels" type="text" placeholder="K, KU, K, CSE" />
+        </label>
+        <label>
+          <span>마크 움직임</span>
+          <select name="markMotion">
+            <option value="lively">활발하게</option>
+            <option value="gentle">살랑살랑</option>
+            <option value="still">멈춤</option>
+          </select>
+        </label>
         <div class="customizer__actions">
           <button class="button button--ink" type="submit">미리보기 적용</button>
           <button class="button button--line" id="copy-config" type="button">설정 JSON 복사</button>

@@ -13,7 +13,8 @@ window.NETWORKING_SITE_CONFIG = {
     brand: "KU CSE NETWORK",
     title: "건국 컴퓨터공학 동문 네트워킹 데이",
     contactEmail: "organizer@example.com",
-    unofficialNotice: "건국대학교 공식 행사가 아닌 동문 주도 네트워킹 프로젝트입니다.",
+    unofficialNotice:
+      "건국대학교 공식 행사가 아닌 동문 주도 프로젝트이며, K/KU 캐릭터는 이 페이지 전용 비공식 그래픽입니다.",
     shareText: "건국 컴퓨터공학 동문 네트워킹 데이에 함께해요.",
   },
 
@@ -24,6 +25,16 @@ window.NETWORKING_SITE_CONFIG = {
     forest: "#123c2f",
     paper: "#f4f0e7",
     white: "#fffdf7",
+  },
+
+  // 공식 교표가 아닌 이 페이지 전용 비공식 K/KU 캐릭터입니다.
+  // labels의 개수와 문구, motion(lively/gentle/still)을 자유롭게 바꿀 수 있습니다.
+  decorations: {
+    floatingMarks: {
+      enabled: true,
+      labels: ["K", "KU", "K", "K", "CSE", "KU", "K", "K"],
+      motion: "lively",
+    },
   },
 
   registration: {
@@ -129,13 +140,13 @@ window.NETWORKING_SITE_CONFIG = {
     },
     {
       number: "03",
-      title: "분기마다 한 번",
-      description: "한 번의 명함 교환으로 끝나지 않도록 꾸준한 리듬을 만듭니다.",
+      title: "셋째 목요일의 리듬",
+      description: "분기마다 다시 만나고, 연휴가 겹치는 회차만 한 주 앞당깁니다.",
     },
   ],
 
   audience: [
-    "다른 업계·직무의 동문과 편하게 이야기하고 싶은 분",
+    "서울·판교·수원 등 서로 다른 지역에서 일하는 동문과 만나고 싶은 분",
     "커리어 전환, 채용, 창업에 관한 현실적인 경험을 듣고 싶은 분",
     "후배에게 시행착오를 나누거나 선배에게 질문하고 싶은 분",
     "분기마다 가볍게 돌아올 수 있는 동문 커뮤니티를 찾는 분",
@@ -151,6 +162,11 @@ window.NETWORKING_SITE_CONFIG = {
       question: "신청만 하면 참여가 확정되나요?",
       answer:
         "유료 회차는 결제 승인까지 완료되어야 참여가 확정됩니다. 개인 송금은 자동 확인되지 않으므로 예외 상황에서만 운영자가 수동 처리합니다.",
+    },
+    {
+      question: "퇴근 후 조금 늦게 도착해도 되나요?",
+      answer:
+        "19시부터 체크인과 식사를 시작하고 놓치면 안 되는 공식 프로그램은 19시 30분에 엽니다. 판교·수원 등 원거리 참석자도 서두르지 않고 합류할 수 있게 운영합니다.",
     },
     {
       question: "취소와 환불은 어떻게 하나요?",
@@ -203,26 +219,27 @@ window.NETWORKING_SITE_CONFIG = {
       titleLineOne: "전공을 지나,",
       titleLineTwo: "서로의 다음을 잇는 밤.",
       description:
-        "서로 다른 현장에서 일하는 컴퓨터공학 동문이 한 분기에 한 번 만나 경험과 기회를 나눕니다.",
-      notice: "비공식 동문 네트워킹 프로젝트 · 실제 행사 정보 입력 전 데모",
-      dateLabel: "2026년 9월 · 일정 협의 중",
-      time: "16:00–20:00 · 예시",
-      venue: "서울 · 장소 협의 중",
+        "서울·판교·수원 등 서로 다른 현장에서 일하는 컴퓨터공학 동문이 분기에 한 번 홍대에 모여 경험과 기회를 나눕니다.",
+      notice: "분기별 셋째 목요일 운영 원칙 · 연휴 인접 시 조정 · 현재 예시안",
+      dateLabel: "2026년 9월 17일(목) · 예시안",
+      time: "19:00 입장 · 19:30 시작",
+      venue: "홍대입구 인근 · 장소 협의 중",
       address: "실제 장소 확정 후 입력",
       priceLabel: "참가비 확정 전",
       capacity: 60,
       applicationLabel: "참가 신청하기",
       applicationCopy: "신청 정보를 입력한 뒤 결제가 확인되면 참여가 확정됩니다.",
       aboutIntro:
-        "취업 설명회도, 딱딱한 총회도 아닙니다. 비슷한 출발점에서 각자의 길을 만든 사람들이 편하게 묻고 답하는 자리입니다.",
+        "19시부터 천천히 입장하고, 놓치면 안 되는 순서는 19시 30분에 시작합니다. 먼 곳에서 퇴근한 동문도 부담 없이 합류해 실제 다음 연락으로 이어지는 대화를 나눕니다.",
       quote: "지금 필요한 건 완벽한 소개가 아니라, 다음 대화를 시작할 한 사람일지도 모릅니다.",
-      programDescription: "처음 온 사람도 자연스럽게 섞일 수 있도록 대화의 흐름을 설계합니다.",
+      programDescription: "누구를 만날 수 있는지 미리 알고, 처음 온 사람도 실제 연결을 하나씩 남기도록 흐름을 설계합니다.",
       agenda: [
-        { time: "16:00", title: "반가운 체크인", description: "관심 주제가 담긴 이름표를 받고 첫 대화를 시작합니다." },
-        { time: "16:30", title: "동문 라이트닝", description: "현업·연구·창업에서 얻은 배움을 10분씩 공유합니다." },
-        { time: "17:20", title: "테이블 토크", description: "커리어, 기술, 창업 등 관심사별 소그룹 대화를 엽니다." },
-        { time: "18:40", title: "오픈 네트워킹", description: "다과와 함께 자유롭게 연결하고 다음 만남을 약속합니다." },
-        { time: "20:00", title: "다음 분기 예고", description: "Q4 주제 제안과 운영 피드백으로 마무리합니다." },
+        { time: "19:00", title: "체크인 & 웰컴푸드", description: "먼 곳에서 퇴근한 동문도 천천히 도착해 이름표를 받고 첫 대화를 엽니다." },
+        { time: "19:30", title: "공식 오프닝", description: "오늘 만날 사람과 대화 규칙을 짧게 소개합니다." },
+        { time: "19:40", title: "동문 스포트라이트", description: "현업·연구·창업의 경험과 지금 풀고 있는 문제를 나눕니다." },
+        { time: "20:20", title: "큐레이션 네트워킹", description: "커리어, 기술, 창업 등 관심사별로 자리를 옮기며 깊게 대화합니다." },
+        { time: "21:30", title: "공식 종료 & 자유 대화", description: "연락을 이어갈 사람을 확인하고 희망자는 조금 더 이야기합니다." },
+        { time: "22:00", title: "전체 마무리", description: "다음 분기 제안과 운영 피드백을 남기고 안전하게 귀가합니다." },
       ],
     },
     {
@@ -236,10 +253,10 @@ window.NETWORKING_SITE_CONFIG = {
       titleLineOne: "올해의 마지막,",
       titleLineTwo: "다음 해를 먼저 만나는 밤.",
       description: "Q4 회차는 Q3 행사 종료 후 참가자 제안을 반영해 주제와 일정을 공개합니다.",
-      notice: "예정 회차 · 알림 신청 기능은 추후 연결",
-      dateLabel: "2026년 12월 예정",
-      time: "추후 공개",
-      venue: "추후 공개",
+      notice: "분기별 셋째 목요일 원칙 · 알림 신청 기능은 추후 연결",
+      dateLabel: "2026년 11월 셋째 목요일 · 예시안",
+      time: "19:00 입장 · 19:30 시작",
+      venue: "홍대입구 인근 · 추후 공개",
       address: "",
       priceLabel: "추후 공개",
       capacity: 60,

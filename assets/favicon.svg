@@ -1,6 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="KU CSE Network K">
-  <rect width="64" height="64" rx="18" fill="#123c2f"/>
-  <circle cx="32" cy="32" r="25" fill="none" stroke="#fffdf7" stroke-opacity=".35" stroke-width="2"/>
-  <path d="M19 14h8v15l13-15h10L36 30l15 20H41L30.5 36 27 40v10h-8z" fill="#fffdf7"/>
-  <path d="M47 45h8v8h-3v-3.2l-5 5-2-2 5-5h-3z" fill="#ff6b35"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="KU CSE Quarterly K">
+  <rect width="64" height="64" fill="#153d32"/>
+  <rect x="5" y="5" width="54" height="54" fill="none" stroke="#fffdf7" stroke-width="2"/>
+  <rect x="9" y="47" width="46" height="8" fill="#7b2638"/>
+  <path d="M17 11h8v15l13-15h10L34 27l15 20H39L28.5 33 25 37v10h-8z" fill="#fffdf7"/>
+  <circle cx="45" cy="51" r="1.3" fill="#fffdf7"/>
+  <circle cx="50" cy="51" r="1.3" fill="#fffdf7"/>
 </svg>

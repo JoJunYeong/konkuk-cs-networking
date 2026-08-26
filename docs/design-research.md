@@ -1,0 +1,52 @@
+# 전통형 동문 사이트 UI/UX 조사
+
+조사일: 2026-08-27  
+조사 방식: ego-lite로 공식 사이트의 데스크톱 첫 화면과 행사 목록 화면을 직접 열어 시각 구조, 서체, 색, 정보 위계를 비교했다.
+
+## 조사 범위
+
+| 지역 | 공식 사이트 | 화면에서 확인한 특징 |
+| --- | --- | --- |
+| 미국 | [Harvard Alumni](https://alumni.harvard.edu/) · [Programs & Events](https://alumni.harvard.edu/programs-events) | Libre Baskerville 계열의 세리프 제목, Crimson 단색 유틸리티 바, 넓은 실제 사진, 월 약어와 날짜를 먼저 보여주는 행사 목록 |
+| 미국 | [Yale Alumni Association](https://alumni.yale.edu/) · [Events Calendar](https://alumni.yale.edu/events) | 전용 세리프 워드마크와 75px급 제목, 흰색·Yale Blue 중심, 날짜별로 묶은 캘린더와 왼쪽 필터 |
+| 미국 | [Princeton Alumni](https://alumni.princeton.edu/) · [Events](https://alumni.princeton.edu/events) | Black·White·Orange의 절제된 대비, 200주년 표식, 신문처럼 나뉜 영웅 영역, 가로선으로 구분한 행사 행 |
+| 영국 | [Oxford Alumni](https://www.alumni.ox.ac.uk/) | Dark Navy 기반의 단단한 상단 체계, 대문자 메뉴, 날짜가 분명한 뉴스·행사 카드. 쿠키 패널로 일부 첫 화면은 제한적으로 관찰 |
+| 영국 | [Cambridge Alumni](https://www.alumni.cam.ac.uk/) · [Alumni events](https://www.alumni.cam.ac.uk/alumni-events) | 대학 마스터 헤더 아래 별도 Alumni 마스트헤드, Feijoa 계열 세리프, Featured와 All events를 나누는 편집 구조 |
+| 싱가포르 | [NUS Alumni Relations](https://nus.edu.sg/alumnet/) | 대학 로고와 Alumni Relations를 분리 표기, Blue·Orange 단색, 동문지 `ISSUE #140`처럼 발행호로 지속성을 보여줌 |
+| 일본 | [Waseda Alumni](https://www.waseda.jp/top/en/alumni) | 넓은 여백, 작은 날짜, 세리프 `alumni` 제목, 교우회가 `SINCE 1885`를 정체성의 중심에 둠 |
+| 호주 | [University of Melbourne Alumni](https://www.unimelb.edu.au/alumni) | Fraunces·Georgia 계열 제목, Navy 단색 면과 실제 사진을 반으로 나눈 영웅 영역, 기능성 CTA를 짧게 배치 |
+
+## 반복해서 나타난 신뢰의 장치
+
+1. 제목과 기관명에는 세리프, 메뉴·필터·날짜에는 산세리프를 쓴다.
+2. 학교색 한두 개와 흰색을 중심으로 구성하고 그라디언트·반투명 유리 효과를 거의 쓰지 않는다.
+3. 마스트헤드, 유틸리티 바, 가로선으로 정보의 위계를 만든다. 둥근 카드 여러 개로 화면을 채우지 않는다.
+4. `200 years`, `Issue #140`, `Since 1885`, 행사 날짜처럼 검증 가능한 기록을 전통의 근거로 삼는다.
+5. 행사는 사진보다 먼저 날짜·장소·유형이 읽힌다. 목록은 날짜별 또는 행 단위로 정돈한다.
+6. 실제 공동체 사진을 크게 쓰되, 기관 정체성을 과장하는 합성 일러스트는 중심 자산으로 쓰지 않는다.
+
+## 이 사이트에 적용한 결정
+
+- 기존의 그라디언트 배경, 빛 번짐, 회전한 유리 티켓, 둥근 카드 군집을 제거했다.
+- 따뜻한 종이색, Deep Green, Muted Burgundy, 세리프 제목, 이중 가로선을 기본 언어로 삼았다.
+- 화면을 `분기 회보`처럼 보이게 하고, 이번 회차를 `ISSUE`, 과거 행사를 `No.01–03`으로 표기했다.
+- 사실로 확인된 `2023년 3회·기록상 누적 78명`을 앞쪽 아카이브에 배치했다. 창립연도나 공식 동문회 지위는 만들지 않았다.
+- 과거 행사는 날짜·장소·참여 규모·공개용 요약을 행 단위로 보여준다. 사진은 별도 공개 동의 전까지 표시하지 않는다.
+- 이전 요청의 귀여운 움직임은 버리지 않고, 공식 캐릭터 대신 비공식 K/KU/CSE 여백 마크 3개가 천천히 걷도록 축소했다.
+- 건국대학교 공식 교표·마스코트는 외부 사용과 변형 권한이 확인되지 않아 포함하지 않았다.
+
+## Notion 원본에서 확인한 실제 연혁
+
+공개된 `Networking Day` 데이터베이스와 각 상세 페이지를 읽기 전용으로 확인했다.
+
+| 회차 | 날짜 | 장소 | 기록상 참여 | 공개용 핵심 내용 |
+| --- | --- | --- | ---: | --- |
+| 제1회 | 2023-07-15 | 파티앤스터디 건대점 | 13명 | 선후배 전공 경험 공유, 자유 네트워킹 |
+| 제2회 | 2023-09-01 | 건국대학교 공학관 D동 X-Space 2층 메인홀 | 40명 | 커리어 탐색, 취업 조언, 전공 분야 교류 |
+| 제3회 | 2023-12-15 | X-Space와 어린이대공원역 인근 | 25명 | 졸업 프로젝트 발표, 취업 Q&A, 연말 교류 |
+
+원본 상세에는 참석자 얼굴 사진과 과거 송금 정보가 함께 있다. 이 사이트는 해당 블록을 가져오지 않고 공개용 데이터 속성만 사용한다.
+
+## 판단 기준
+
+`전통 있어 보임`은 낡은 장식이나 가짜 창립연도를 뜻하지 않는다. 이 프로젝트에서는 실제 회차, 날짜, 운영 변화, 회고가 축적되어 보이는 것이 전통이다. 디자인은 그 기록이 먼저 읽히도록 조용히 받치는 역할만 한다.

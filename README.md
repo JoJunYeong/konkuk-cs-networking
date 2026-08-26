@@ -1,6 +1,6 @@
 # KU CSE Quarterly Network
 
-건국대학교 컴퓨터공학 동문 네트워킹 데이를 분기마다 운영하기 위한 모바일 우선 행사 페이지입니다.
+건국대학교 컴퓨터공학 편입생·재학생·졸업생 네트워킹 데이를 분기마다 운영하기 위한 행사 페이지입니다. 2023년 실제 운영 기록을 개인정보 없이 정리한 아카이브와 동문회 회보를 닮은 편집형 디자인을 함께 담았습니다.
 
 현재는 안전한 `preview` 모드입니다. 신청 폼의 화면 검증만 수행하며 개인정보 저장, 결제, 카카오 메시지 발송은 일어나지 않습니다.
 
@@ -19,13 +19,15 @@ python3 -m http.server 4173
 
 - `site`: 행사명, 운영 문의, 공유 문구
 - `theme`: 포인트·배경·본문 색상
-- `decorations.floatingMarks`: 비공식 K/KU 캐릭터 문구와 움직임
+- `decorations.floatingMarks`: 비공식 K/KU/CSE 여백 마크와 움직임
 - `form.fields`: 신청 문항, 필수 여부, 선택지
 - `values`, `audience`, `defaultFaq`: 공통 소개 콘텐츠
 - `events`: Q1~Q4 회차별 일정, 장소, 참가비, 정원, 프로그램
 - `registration`: 미리보기·외부 결제·자체 API 모드
 
-미리보기 상단의 `화면에서 커스텀`을 누르면 제목, 일정, 장소, 참가비, 정원, 색상과 떠다니는 마크를 즉석에서 바꾸고 JSON을 복사할 수 있습니다. 마크는 이 페이지 전용 비공식 그래픽이며, 움직임은 `활발하게`, `살랑살랑`, `멈춤` 중에서 고를 수 있습니다. 이 변경은 브라우저에만 적용되며 파일을 자동 수정하지 않습니다.
+미리보기 상단의 `화면에서 커스텀`을 누르면 제목, 일정, 장소, 참가비, 정원, 색상과 움직이는 마크를 즉석에서 바꾸고 JSON을 복사할 수 있습니다. 마크는 이 페이지 전용 비공식 그래픽이며, 움직임은 `활발하게`, `살랑살랑`, `멈춤` 중에서 고를 수 있습니다. 이 변경은 브라우저에만 적용되며 파일을 자동 수정하지 않습니다.
+
+지난 행사는 [`data/history.json`](./data/history.json)에서 바로 수정할 수 있습니다. 제목, 날짜, 장소, 참여 인원, 공개용 요약, 핵심 프로그램, 회고 메모를 지원합니다.
 
 ## 새 분기 추가
 
@@ -36,6 +38,17 @@ python3 -m http.server 4173
 5. 실제 일정, 장소, 참가비, 정원, 프로그램을 입력합니다.
 
 `?quarter=2026-Q4`처럼 URL에 회차를 넣으면 해당 회차를 바로 공유할 수 있습니다.
+
+## Notion에서 지난 기록 관리
+
+Notion을 공개 사이트에서 직접 fetch하지 않습니다. GitHub Action이 매주 월요일과 수동 실행 시 `공개` 체크된 행만 읽어 정적 JSON으로 저장합니다.
+
+1. Notion DB에 `공개`, `장소`, `참여 인원`, `요약`, `핵심 프로그램`, `공개 회고` 속성을 추가합니다.
+2. 읽기 전용 Internal connection을 DB에 공유합니다.
+3. GitHub Actions Secret에 `NOTION_TOKEN`을 추가합니다.
+4. `Sync public history from Notion` workflow를 수동 실행합니다.
+
+자세한 연결·개인정보 보호 절차는 [`docs/notion-sync.md`](./docs/notion-sync.md), 디자인 조사 근거는 [`docs/design-research.md`](./docs/design-research.md)를 확인하세요.
 
 ## 신청·결제 연결 방식
 
@@ -82,10 +95,9 @@ registration: {
 
 CSS·설정·JavaScript를 바꿔 재배포할 때는 기존 방문자의 GitHub Pages 캐시가 남지 않도록 `index.html`의 `?v=` 배포 버전도 함께 올립니다.
 
-1. 이 폴더를 별도 GitHub 저장소에 올립니다.
-2. 저장소 `Settings → Pages`에서 `Deploy from a branch`를 선택합니다.
-3. `main` 브랜치와 `/ (root)`를 선택합니다.
-4. 배포 URL에서 모바일 화면, 신청 문항, 개인정보 문구를 다시 검수합니다.
+1. 변경 내용을 `main` 브랜치에 push합니다.
+2. 저장소 `Settings → Pages`에서 `Deploy from a branch`, `main`, `/ (root)`를 유지합니다.
+3. 배포 URL에서 데스크톱·모바일 화면, 신청 문항, 아카이브 개인정보 문구를 다시 검수합니다.
 
 실제 신청 API 키, 결제 Secret, 알림톡 키는 GitHub 저장소나 브라우저 JavaScript에 넣지 않습니다.
 
@@ -99,6 +111,8 @@ CSS·설정·JavaScript를 바꿔 재배포할 때는 기존 방문자의 GitHub
 - 실제 소액 결제 → 승인 확인 → 확정 메시지 → 취소·환불 전 과정 테스트
 - 카카오 메시지의 수신 성공과 실패 대체 경로 확인
 - 건국대학교 공식 행사로 오인되지 않도록 관계와 명칭 검토
+- Notion 공개 상세의 과거 송금 문구 삭제 또는 비공개 전환 검토
+- 행사 사진 속 모든 참석자의 웹 공개 동의 확인
 
 ## 파일 구조
 
@@ -108,8 +122,16 @@ CSS·설정·JavaScript를 바꿔 재배포할 때는 기존 방문자의 GitHub
 ├── assets/
 │   ├── app.js
 │   └── styles.css
+├── data/
+│   └── history.json
+├── scripts/
+│   └── sync-notion.mjs
+├── .github/workflows/
+│   └── sync-notion.yml
 ├── config/
 │   └── site.config.js
 └── docs/
+    ├── design-research.md
+    ├── notion-sync.md
     └── payment-message-flow.md
 ```

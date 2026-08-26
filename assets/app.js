@@ -41,17 +41,17 @@
     customizerDialog: $("#customizer-dialog"),
     customizerForm: $("#customizer-form"),
     floatingMarks: $("#floating-marks"),
+    archiveList: $("#archive-list"),
+    archiveCount: $("#archive-count"),
+    archiveAttendance: $("#archive-attendance"),
+    archiveSourceNote: $("#archive-source-note"),
   };
 
   const markPlacements = [
-    { x: "-1%", y: "13%", size: "70px", duration: "11s", delay: "-2s" },
-    { x: "43%", y: "7%", size: "52px", duration: "13s", delay: "-8s" },
-    { x: "88%", y: "13%", size: "82px", duration: "12s", delay: "-5s" },
-    { x: "58%", y: "48%", size: "62px", duration: "10s", delay: "-7s" },
-    { x: "3%", y: "73%", size: "56px", duration: "14s", delay: "-10s" },
-    { x: "69%", y: "83%", size: "74px", duration: "12s", delay: "-4s" },
-    { x: "91%", y: "66%", size: "54px", duration: "9s", delay: "-6s" },
-    { x: "54%", y: "88%", size: "44px", duration: "13s", delay: "-11s" },
+    { x: "1.5%", y: "26%", size: "54px", duration: "15s", delay: "-3s" },
+    { x: "86%", y: "12%", size: "48px", duration: "18s", delay: "-9s" },
+    { x: "62%", y: "84%", size: "50px", duration: "17s", delay: "-6s" },
+    { x: "9%", y: "88%", size: "44px", duration: "19s", delay: "-12s" },
   ];
 
   function applyTheme(theme) {
@@ -122,6 +122,124 @@
       li.textContent = item;
       list.append(li);
     });
+  }
+
+  function formatHistoryDate(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+    if (!match) return { year: "기록", day: String(value || "날짜 미상") };
+
+    return {
+      year: match[1],
+      day: `${Number(match[2])}월 ${Number(match[3])}일`,
+    };
+  }
+
+  function appendArchiveMeta(container, label, value) {
+    if (value === undefined || value === null || value === "") return;
+
+    const item = document.createElement("span");
+    const key = document.createElement("strong");
+    key.textContent = label;
+    item.append(key, document.createTextNode(String(value)));
+    container.append(item);
+  }
+
+  function renderHistory(history) {
+    const events = Array.isArray(history?.events) ? history.events : [];
+    elements.archiveList.replaceChildren();
+
+    if (events.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "archive-list__error";
+      empty.textContent = "공개할 수 있는 지난 모임 기록이 아직 없습니다.";
+      elements.archiveList.append(empty);
+      elements.archiveCount.textContent = "0회";
+      elements.archiveAttendance.textContent = "0명";
+      return;
+    }
+
+    const sorted = [...events].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    const fragment = document.createDocumentFragment();
+
+    sorted.forEach((event, index) => {
+      const article = document.createElement("article");
+      article.className = "archive-entry";
+
+      const number = document.createElement("span");
+      number.className = "archive-entry__number";
+      number.textContent = `No.${String(event.sequence || index + 1).padStart(2, "0")}`;
+
+      const date = document.createElement("div");
+      date.className = "archive-entry__date";
+      const formattedDate = formatHistoryDate(event.date);
+      const year = document.createElement("span");
+      year.textContent = formattedDate.year;
+      const time = document.createElement("time");
+      time.dateTime = event.date || "";
+      time.textContent = formattedDate.day;
+      date.append(year, time);
+
+      const body = document.createElement("div");
+      body.className = "archive-entry__body";
+      const title = document.createElement("h3");
+      title.textContent = event.title || `${formattedDate.year}년 네트워킹 데이`;
+      const summary = document.createElement("p");
+      summary.className = "archive-entry__summary";
+      summary.textContent = event.summary || "날짜와 기본 정보만 공개된 기록입니다.";
+      body.append(title, summary);
+
+      const meta = document.createElement("div");
+      meta.className = "archive-entry__meta";
+      appendArchiveMeta(meta, "VENUE", event.venue);
+      appendArchiveMeta(meta, "ATTENDANCE", Number.isFinite(Number(event.attendees)) ? `${Number(event.attendees)}명` : "");
+      if (meta.childElementCount > 0) body.append(meta);
+
+      if (Array.isArray(event.highlights) && event.highlights.length > 0) {
+        const highlights = document.createElement("ul");
+        highlights.className = "archive-entry__highlights";
+        event.highlights.forEach((highlight) => {
+          const item = document.createElement("li");
+          item.textContent = highlight;
+          highlights.append(item);
+        });
+        body.append(highlights);
+      }
+
+      if (event.learning) {
+        const learning = document.createElement("p");
+        learning.className = "archive-entry__learning";
+        learning.textContent = `기록 메모 — ${event.learning}`;
+        body.append(learning);
+      }
+
+      article.append(number, date, body);
+      fragment.append(article);
+    });
+
+    elements.archiveList.append(fragment);
+    const attendance = sorted.reduce((sum, event) => {
+      const value = Number(event.attendees);
+      return Number.isFinite(value) ? sum + value : sum;
+    }, 0);
+    elements.archiveCount.textContent = `${sorted.length}회`;
+    elements.archiveAttendance.textContent = attendance > 0 ? `${attendance}명` : "집계 전";
+    if (history.sourceNote) elements.archiveSourceNote.textContent = history.sourceNote;
+  }
+
+  async function loadHistory() {
+    try {
+      const response = await fetch("./data/history.json", { cache: "no-store" });
+      if (!response.ok) throw new Error(`history_${response.status}`);
+      renderHistory(await response.json());
+    } catch (_error) {
+      elements.archiveList.replaceChildren();
+      const error = document.createElement("p");
+      error.className = "archive-list__error";
+      error.textContent = "지난 모임 기록을 불러오지 못했습니다. 잠시 뒤 다시 확인해 주세요.";
+      elements.archiveList.append(error);
+      elements.archiveCount.textContent = "—";
+      elements.archiveAttendance.textContent = "—";
+    }
   }
 
   function renderFloatingMarks() {
@@ -200,10 +318,9 @@
       const button = document.createElement("button");
       button.className = "quarter-tab";
       button.type = "button";
-      button.role = "tab";
       button.dataset.eventId = event.id;
       button.setAttribute("aria-controls", "main");
-      button.setAttribute("aria-selected", String(event.id === state.event.id));
+      button.setAttribute("aria-pressed", String(event.id === state.event.id));
 
       const label = document.createElement("span");
       label.className = "quarter-tab__label";
@@ -623,8 +740,8 @@
     form.elements.venue.value = state.event.venue;
     form.elements.priceLabel.value = state.event.priceLabel;
     form.elements.capacity.value = state.event.capacity;
-    form.elements.accent.value = toHex(config.theme.accent, "#ff6b35");
-    form.elements.paper.value = toHex(config.theme.paper, "#f4f0e7");
+    form.elements.accent.value = toHex(config.theme.accent, "#7b2638");
+    form.elements.paper.value = toHex(config.theme.paper, "#f2eee2");
     form.elements.markLabels.value = (config.decorations?.floatingMarks?.labels || []).join(", ");
     form.elements.markMotion.value = config.decorations?.floatingMarks?.motion || "lively";
     setText("#customizer-message", "변경 내용은 현재 브라우저 미리보기에만 적용됩니다.");
@@ -722,6 +839,7 @@
     setSiteContent();
     renderValues();
     renderAudience();
+    loadHistory();
     renderFloatingMarks();
     renderFields();
     initializeDialogs();

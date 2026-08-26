@@ -1,0 +1,52 @@
+name: Sync public history from Notion
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 매주 월요일 06:17 KST (일요일 21:17 UTC)
+    - cron: "17 21 * * 0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: notion-history-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      NOTION_DATABASE_ID: 2f3ec978c1f146f8a0d1615b0aac62fa
+      NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Sync approved Notion rows
+        shell: bash
+        run: |
+          if [ -z "${NOTION_TOKEN:-}" ]; then
+            echo "::notice::NOTION_TOKEN secret is not configured; keeping the checked-in archive."
+            exit 0
+          fi
+          node scripts/sync-notion.mjs
+
+      - name: Commit changed archive
+        shell: bash
+        run: |
+          if git diff --quiet -- data/history.json; then
+            echo "No public archive changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/history.json
+          git commit -m "chore: sync public networking history"
+          git push

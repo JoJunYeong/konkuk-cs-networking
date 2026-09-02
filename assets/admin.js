@@ -28,6 +28,25 @@ const clone = (value) =>
     ? structuredClone(value)
     : JSON.parse(JSON.stringify(value));
 
+function eventRevision(event) {
+  const revision = Number(event?.revision);
+  return Number.isFinite(revision) && revision > 0 ? revision : 0;
+}
+
+function mergeEventCollections(staticEvents, managedEvents) {
+  const managedById = new Map(managedEvents.map((event) => [event.id, event]));
+  const staticIds = new Set(staticEvents.map((event) => event.id));
+  const merged = staticEvents.map((staticEvent) => {
+    const managedEvent = managedById.get(staticEvent.id);
+    if (!managedEvent) return staticEvent;
+    return eventRevision(staticEvent) > eventRevision(managedEvent)
+      ? staticEvent
+      : managedEvent;
+  });
+
+  return merged.concat(managedEvents.filter((event) => !staticIds.has(event.id)));
+}
+
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
@@ -107,7 +126,7 @@ async function loadDashboardData() {
   ]);
 
   state.events = Array.isArray(managedEvents) && managedEvents.length > 0
-    ? managedEvents
+    ? mergeEventCollections(clone(sourceConfig.events), managedEvents)
     : clone(sourceConfig.events);
   state.history = managedHistory?.events ? managedHistory : staticHistory;
 
@@ -200,6 +219,7 @@ function collectEventForm() {
   event.capacity = Number(elements.eventForm.elements.capacity.value) || 1;
   event.featured = elements.eventForm.elements.featured.checked;
   event.agenda = textToAgenda(elements.eventForm.elements.agenda.value);
+  event.revision = Date.now();
   if (event.id !== previousId) state.selectedEventId = event.id;
 }
 
@@ -225,6 +245,7 @@ function addEvent() {
     status: "upcoming",
     statusLabel: "예정",
     featured: false,
+    revision: Date.now(),
     eyebrow: `KONKUK CSE ALUMNI · ${next.label}`,
     titleLineOne: "다음 모임을",
     titleLineTwo: "준비하고 있습니다.",

@@ -14,6 +14,25 @@
       ? structuredClone(value)
       : JSON.parse(JSON.stringify(value));
 
+  function eventRevision(event) {
+    const revision = Number(event?.revision);
+    return Number.isFinite(revision) && revision > 0 ? revision : 0;
+  }
+
+  function mergeEventCollections(staticEvents, managedEvents) {
+    const managedById = new Map(managedEvents.map((event) => [event.id, event]));
+    const staticIds = new Set(staticEvents.map((event) => event.id));
+    const merged = staticEvents.map((staticEvent) => {
+      const managedEvent = managedById.get(staticEvent.id);
+      if (!managedEvent) return staticEvent;
+      return eventRevision(staticEvent) > eventRevision(managedEvent)
+        ? staticEvent
+        : managedEvent;
+    });
+
+    return merged.concat(managedEvents.filter((event) => !staticIds.has(event.id)));
+  }
+
   const config = clone(sourceConfig);
   const state = {
     event: null,
@@ -119,7 +138,7 @@
     ]);
 
     if (Array.isArray(managedEvents) && managedEvents.length > 0) {
-      config.events = managedEvents;
+      config.events = mergeEventCollections(config.events, managedEvents);
     }
     if (managedHistory?.events && Array.isArray(managedHistory.events)) {
       state.managedHistory = managedHistory;

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="440" viewBox="0 0 440 440" role="img" aria-labelledby="title desc">
+  <title id="title">2026 Q3 건국 컴공 분기 네트워킹</title>
+  <desc id="desc">9월 17일 오후 7시 홍대입구에서 열리는 비공식 동문 모임 안내</desc>
+
+  <rect width="440" height="440" fill="#f2eee2"/>
+  <rect x="16" y="16" width="408" height="408" rx="2" fill="none" stroke="#17231e" stroke-width="2"/>
+
+  <rect x="28" y="28" width="384" height="54" fill="#153d32"/>
+  <text x="48" y="62" fill="#fffdf7" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="700" letter-spacing="2.6">KONKUK CSE · QUARTER 03</text>
+
+  <text x="30" y="190" fill="#153d32" font-family="Georgia, Times New Roman, serif" font-size="126" font-weight="700" letter-spacing="-8">KU</text>
+  <circle cx="356" cy="144" r="43" fill="#7b2638"/>
+  <text x="356" y="137" fill="#fffdf7" font-family="Arial, sans-serif" font-size="13" font-weight="700" text-anchor="middle" letter-spacing="1.8">2026</text>
+  <text x="356" y="160" fill="#fffdf7" font-family="Arial, sans-serif" font-size="20" font-weight="800" text-anchor="middle">Q3</text>
+
+  <line x1="30" y1="216" x2="410" y2="216" stroke="#17231e" stroke-width="1"/>
+  <text x="30" y="261" fill="#17231e" font-family="Apple SD Gothic Neo, Noto Sans KR, Arial, sans-serif" font-size="33" font-weight="800" letter-spacing="-1">건국 컴공</text>
+  <text x="30" y="304" fill="#17231e" font-family="Apple SD Gothic Neo, Noto Sans KR, Arial, sans-serif" font-size="33" font-weight="800" letter-spacing="-1">분기 네트워킹</text>
+
+  <rect x="28" y="334" width="384" height="58" fill="#7b2638"/>
+  <text x="47" y="369" fill="#fffdf7" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="700" letter-spacing="1.2">SEP 17</text>
+  <line x1="145" y1="349" x2="145" y2="377" stroke="#fffdf7" stroke-opacity=".45"/>
+  <text x="169" y="369" fill="#fffdf7" font-family="Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="1.2">19:00</text>
+  <line x1="257" y1="349" x2="257" y2="377" stroke="#fffdf7" stroke-opacity=".45"/>
+  <text x="280" y="369" fill="#fffdf7" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="16" font-weight="700" letter-spacing="1.2">HONGDAE</text>
+
+  <text x="30" y="414" fill="#62675f" font-family="Arial, Apple SD Gothic Neo, sans-serif" font-size="10" font-weight="700" letter-spacing="1.1">UNOFFICIAL ALUMNI NETWORKING · CAPACITY 100</text>
+</svg>

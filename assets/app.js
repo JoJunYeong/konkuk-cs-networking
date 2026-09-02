@@ -37,7 +37,10 @@
     fields: $("#dynamic-fields"),
     submit: $("#submit-button"),
     primaryCta: $("#primary-cta"),
+    headerCta: $("#header-cta"),
     mobileCta: $("#mobile-cta"),
+    managedRegistration: $("#managed-registration"),
+    providerCta: $("#provider-cta"),
     resultDialog: $("#result-dialog"),
     customizerDialog: $("#customizer-dialog"),
     customizerForm: $("#customizer-form"),
@@ -47,6 +50,36 @@
     archiveAttendance: $("#archive-attendance"),
     archiveSourceNote: $("#archive-source-note"),
   };
+
+  const providerNames = {
+    onoffmix: "온오프믹스",
+    eventus: "이벤터스",
+    other: "외부 신청 플랫폼",
+  };
+
+  function safeExternalUrl(rawUrl) {
+    if (!rawUrl) return "";
+
+    try {
+      const parsed = new URL(String(rawUrl), window.location.href);
+      return parsed.protocol === "https:" ? parsed.href : "";
+    } catch (_error) {
+      return "";
+    }
+  }
+
+  function registrationDetails(event = state.event) {
+    const provider = event?.registrationProvider || config.registration.provider || "other";
+    return {
+      provider,
+      providerName:
+        event?.registrationProviderLabel ||
+        providerNames[provider] ||
+        config.registration.providerLabel ||
+        providerNames.other,
+      url: safeExternalUrl(event?.registrationUrl || config.registration.providerUrl),
+    };
+  }
 
   const markPlacements = [
     { x: "1.5%", y: "26%", size: "54px", duration: "15s", delay: "-3s" },
@@ -121,12 +154,46 @@
 
     const contact = $("#contact-link");
     if (contact) {
-      contact.href = `mailto:${site.contactEmail}`;
-      contact.setAttribute("aria-label", `${site.contactEmail}로 운영 문의`);
+      if (site.contactEmail && !site.contactEmail.endsWith("@example.com")) {
+        contact.hidden = false;
+        contact.href = `mailto:${site.contactEmail}`;
+        contact.setAttribute("aria-label", `${site.contactEmail}로 운영 문의`);
+      } else {
+        contact.hidden = true;
+      }
     }
 
     elements.previewBanner.hidden = !config.previewMode;
     $("#open-customizer").hidden = !config.previewMode;
+  }
+
+  function updateBanner(isOpen, hasRegistrationLink) {
+    if (config.previewMode) {
+      elements.previewBanner.hidden = false;
+      setText("#banner-title", "시험 운영 중");
+      setText("#banner-copy", "아래 일정은 확정 전입니다. 입력 내용은 저장되거나 전송되지 않습니다.");
+      return;
+    }
+
+    const waitingForLink = config.registration.mode === "external" && isOpen && !hasRegistrationLink;
+    elements.previewBanner.hidden = !waitingForLink;
+    if (waitingForLink) {
+      setText("#banner-title", "신청 준비 중");
+      setText("#banner-copy", "신청·결제 링크를 연결하고 있습니다. 현재 이 페이지에서는 개인정보를 받지 않습니다.");
+    }
+  }
+
+  function configureCta(element, { enabled, href, label, external = false }) {
+    if (!element) return;
+    element.textContent = label;
+    element.setAttribute("aria-disabled", String(!enabled));
+    element.tabIndex = enabled ? 0 : -1;
+    element.href = enabled ? href : "#apply";
+    if (enabled && external) {
+      element.rel = "external";
+    } else {
+      element.removeAttribute("rel");
+    }
   }
 
   function renderValues() {
@@ -371,7 +438,11 @@
       const strong = document.createElement("strong");
       strong.textContent = event.quarter;
       const status = document.createElement("span");
-      status.textContent = event.statusLabel;
+      const waitingForExternalLink =
+        config.registration.mode === "external" &&
+        event.status === "open" &&
+        !registrationDetails(event).url;
+      status.textContent = waitingForExternalLink ? "링크 준비 중" : event.statusLabel;
       label.append(strong, status);
 
       const arrow = document.createElement("span");
@@ -415,10 +486,18 @@
   function updateEventContent() {
     const event = state.event;
     const displayDate = [event.dateLabel, event.time].filter(Boolean).join(" · ");
+    const registration = registrationDetails(event);
+    const usesExternalRegistration = config.registration.mode === "external";
+    const isOpen = event.status === "open";
+    const hasRegistrationLink = Boolean(registration.url);
+    const canRegister = isOpen && (!usesExternalRegistration || hasRegistrationLink);
 
     setText("#event-eyebrow", event.eyebrow);
-    setText("#event-status", event.statusLabel);
-    $("#event-status").dataset.status = event.status;
+    setText(
+      "#event-status",
+      isOpen && usesExternalRegistration && !hasRegistrationLink ? "신청 링크 준비 중" : event.statusLabel,
+    );
+    $("#event-status").dataset.status = canRegister ? "open" : event.status === "closed" ? "closed" : "upcoming";
     setText("#hero-title-line-one", event.titleLineOne);
     setText("#hero-title-line-two", event.titleLineTwo);
     setText("#hero-description", event.description);
@@ -436,18 +515,68 @@
     setText("#apply-copy", event.applicationCopy || event.description);
     setText("#summary-event", `${event.quarter} 네트워킹 데이`);
     setText("#summary-date", displayDate);
-    setText("#summary-venue", [event.venue, event.address].filter(Boolean).join(" · "));
+    setText("#summary-venue", event.venue);
     setText("#summary-price", event.priceLabel);
+    setText(
+      "#location-note",
+      event.locationNotice || "정확한 장소는 신청·결제 완료자에게 운영자가 별도로 안내합니다.",
+    );
 
-    const isOpen = event.status === "open";
-    const ctaLabel = isOpen ? event.applicationLabel : event.status === "closed" ? "신청 마감" : "오픈 예정";
-    [elements.primaryCta, elements.mobileCta].forEach((cta) => {
-      cta.textContent = ctaLabel;
-      cta.setAttribute("aria-disabled", String(!isOpen));
-      cta.tabIndex = isOpen ? 0 : -1;
+    const unavailableLabel = event.status === "closed"
+      ? "신청 마감"
+      : isOpen
+        ? "신청 링크 준비 중"
+        : "오픈 예정";
+    const readyLabel = event.applicationLabel === "참가 신청하기"
+      ? "신청·결제하기"
+      : event.applicationLabel || "신청·결제하기";
+    const destination = usesExternalRegistration ? registration.url : "#apply";
+    configureCta(elements.primaryCta, {
+      enabled: canRegister,
+      href: destination,
+      label: canRegister ? readyLabel : unavailableLabel,
+      external: usesExternalRegistration,
+    });
+    configureCta(elements.mobileCta, {
+      enabled: canRegister,
+      href: destination,
+      label: canRegister ? "신청·결제하기 ↗" : unavailableLabel,
+      external: usesExternalRegistration,
+    });
+    configureCta(elements.headerCta, {
+      enabled: canRegister,
+      href: destination,
+      label: canRegister ? "신청·결제 ↗" : unavailableLabel,
+      external: usesExternalRegistration,
     });
 
+    if (usesExternalRegistration) {
+      const providerHeading = canRegister
+        ? "지금 신청과 결제를 한 번에 완료하세요."
+        : event.status === "closed"
+          ? "이번 회차 신청이 마감되었습니다."
+          : isOpen
+            ? "신청 페이지를 준비하고 있습니다."
+            : "신청 오픈 전입니다.";
+      setText("#provider-name", registration.providerName);
+      setText("#provider-heading", providerHeading);
+      setText("#provider-status", canRegister ? "신청 가능" : unavailableLabel);
+      setText(
+        "#provider-footnote",
+        canRegister
+          ? `${registration.providerName} 페이지로 이동합니다. 결제 전에 일정과 환불 기준을 꼭 확인해 주세요.`
+          : "일정·참가비·환불 기준을 확정한 뒤 신청 링크가 열립니다.",
+      );
+      configureCta(elements.providerCta, {
+        enabled: canRegister,
+        href: destination,
+        label: canRegister ? `${registration.providerName}에서 신청·결제하기 ↗` : unavailableLabel,
+        external: true,
+      });
+    }
+
     setFormAvailability(isOpen);
+    updateBanner(isOpen, hasRegistrationLink);
     renderTimeline();
     renderFaq();
     renderQuarterTabs();
@@ -637,11 +766,12 @@
     const mode = config.registration.mode;
 
     if (mode === "external" && config.registration.providerHandlesForm) {
-      if (!config.registration.providerUrl) {
+      const registrationUrl = registrationDetails().url;
+      if (!registrationUrl) {
         showStatus("외부 결제 URL이 아직 설정되지 않았습니다.");
         return;
       }
-      window.location.assign(config.registration.providerUrl);
+      window.location.assign(registrationUrl);
       return;
     }
 
@@ -654,11 +784,12 @@
     }
 
     if (mode === "external") {
-      if (!config.registration.providerUrl) {
+      const registrationUrl = registrationDetails().url;
+      if (!registrationUrl) {
         showStatus("외부 결제 URL이 아직 설정되지 않았습니다.");
         return;
       }
-      window.location.assign(config.registration.providerUrl);
+      window.location.assign(registrationUrl);
       return;
     }
 
@@ -865,7 +996,7 @@
     elements.customizerForm.addEventListener("submit", applyCustomizer);
     $("#copy-config").addEventListener("click", copyCurrentConfig);
 
-    [elements.primaryCta, elements.mobileCta].forEach((cta) => {
+    [elements.primaryCta, elements.headerCta, elements.mobileCta, elements.providerCta].forEach((cta) => {
       cta.addEventListener("click", (event) => {
         if (cta.getAttribute("aria-disabled") === "true") event.preventDefault();
       });
@@ -893,10 +1024,11 @@
 
     const mode = config.registration.mode;
     if (mode === "external" && config.registration.providerHandlesForm) {
-      elements.fields.hidden = true;
-      $(".consent-group", elements.form).hidden = true;
-      $(".form-heading h3", elements.form).textContent = "신청·결제 페이지로 이동";
-      $(".required-note", elements.form).hidden = true;
+      elements.form.hidden = true;
+      elements.managedRegistration.hidden = false;
+    } else {
+      elements.form.hidden = false;
+      elements.managedRegistration.hidden = true;
     }
     setText(
       "#form-footnote",

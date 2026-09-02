@@ -160,7 +160,8 @@ function renderEventSelect() {
   state.events.forEach((event) => {
     const option = document.createElement("option");
     option.value = event.id;
-    option.textContent = `${event.quarter} · ${event.statusLabel}`;
+    const linkWarning = event.status === "open" && !event.registrationUrl ? " · 신청 링크 없음" : "";
+    option.textContent = `${event.quarter} · ${event.statusLabel}${linkWarning}`;
     option.selected = event.id === state.selectedEventId;
     elements.eventSelect.append(option);
   });
@@ -172,9 +173,14 @@ function renderEventForm() {
   if (!event) return;
   [
     "id", "quarter", "sequence", "status", "statusLabel", "titleLineOne", "titleLineTwo",
-    "description", "notice", "dateLabel", "time", "venue", "address", "priceLabel",
-    "capacity", "applicationLabel", "applicationCopy", "aboutIntro", "quote", "programDescription",
+    "description", "notice", "dateLabel", "time", "venue", "locationNotice", "priceLabel",
+    "capacity", "registrationUrl", "applicationLabel", "applicationCopy", "aboutIntro", "quote", "programDescription",
   ].forEach((name) => setValue(elements.eventForm, name, event[name]));
+  setValue(
+    elements.eventForm,
+    "registrationProvider",
+    event.registrationProvider || sourceConfig.registration?.provider || "onoffmix",
+  );
   setValue(elements.eventForm, "featured", event.featured);
   setValue(elements.eventForm, "agenda", agendaToText(event.agenda));
 }
@@ -185,11 +191,12 @@ function collectEventForm() {
   const previousId = event.id;
   [
     "id", "quarter", "sequence", "status", "statusLabel", "titleLineOne", "titleLineTwo",
-    "description", "notice", "dateLabel", "time", "venue", "address", "priceLabel",
-    "applicationLabel", "applicationCopy", "aboutIntro", "quote", "programDescription",
+    "description", "notice", "dateLabel", "time", "venue", "locationNotice", "priceLabel",
+    "registrationProvider", "registrationUrl", "applicationLabel", "applicationCopy", "aboutIntro", "quote", "programDescription",
   ].forEach((name) => {
     event[name] = value(elements.eventForm, name);
   });
+  event.address = "";
   event.capacity = Number(elements.eventForm.elements.capacity.value) || 1;
   event.featured = elements.eventForm.elements.featured.checked;
   event.agenda = textToAgenda(elements.eventForm.elements.agenda.value);
@@ -229,6 +236,9 @@ function addEvent() {
     address: "",
     priceLabel: "참가비 확정 전",
     capacity: 40,
+    registrationProvider: "onoffmix",
+    registrationUrl: "",
+    locationNotice: "정확한 장소는 신청·결제 완료자에게 운영자가 별도로 안내합니다.",
     applicationLabel: "오픈 예정",
     applicationCopy: "신청 시작일이 정해지면 이곳에서 안내하겠습니다.",
     aboutIntro: "학교와 일 이야기를 편하게 나누는 자리입니다.",
@@ -263,6 +273,15 @@ function validateEvents() {
     ids.add(event.id);
     if (!event.quarter || !event.titleLineOne || !event.dateLabel || !event.venue) throw new Error("필수 항목을 모두 입력해 주세요.");
     if (!Number.isFinite(event.capacity) || event.capacity < 1) throw new Error("정원을 확인해 주세요.");
+    if (event.registrationUrl) {
+      let parsed;
+      try {
+        parsed = new URL(event.registrationUrl);
+      } catch (_error) {
+        throw new Error("신청 URL 형식을 확인해 주세요.");
+      }
+      if (parsed.protocol !== "https:") throw new Error("신청 URL은 https:// 주소만 사용할 수 있습니다.");
+    }
   }
   if (!state.events.some((event) => event.featured)) state.events[0].featured = true;
   const featured = state.events.filter((event) => event.featured);
@@ -280,7 +299,13 @@ async function saveEvents(event) {
     validateEvents();
     await writePayload("events", state.events);
     renderEventSelect();
-    showSyncStatus("분기별 행사 내용을 저장했습니다.");
+    const openWithoutLink = state.events.some((item) => item.status === "open" && !item.registrationUrl);
+    showSyncStatus(
+      openWithoutLink
+        ? "행사 내용은 저장했습니다. ‘신청 가능’ 회차에 신청 URL이 없어 공개 버튼은 아직 열리지 않습니다."
+        : "분기별 행사 내용을 저장했습니다. 공개 신청 버튼에도 반영됩니다.",
+      false,
+    );
   } catch (error) {
     showSyncStatus(error?.message || "행사 내용을 저장하지 못했습니다.", true);
   } finally {

@@ -7,12 +7,12 @@
  * 3. 실제 결제 연결 전까지 registration.mode는 "preview"로 유지합니다.
  */
 window.NETWORKING_SITE_CONFIG = {
-  previewMode: true,
+  previewMode: false,
 
   site: {
     brand: "KU CSE QUARTERLY",
     title: "건국 컴퓨터공학 분기 네트워킹 데이",
-    contactEmail: "organizer@example.com",
+    contactEmail: "",
     unofficialNotice:
       "건국대학교 공식 행사가 아닌 동문 주도 프로젝트이며, 움직이는 K/KU 마크는 이 페이지 전용 비공식 그래픽입니다.",
     shareText: "건국대 컴공 선후배가 분기마다 모입니다. 이번 모임에서 만나요.",
@@ -39,11 +39,14 @@ window.NETWORKING_SITE_CONFIG = {
 
   registration: {
     // preview: 네트워크 요청 없이 UI만 검증
-    // external: providerUrl로 이동 (리틀리/이벤터스 등 외부 결제 페이지)
+    // external: 회차별 registrationUrl 또는 providerUrl로 이동
     // api: endpoint로 신청서를 POST하고 응답의 checkoutUrl로 이동
-    mode: "preview",
-    provider: "littly",
+    mode: "external",
+    provider: "onoffmix",
+    providerLabel: "온오프믹스",
     providerUrl: "",
+    providerCreateUrl: "https://www.onoffmix.com/event/add",
+    providerAdminUrl: "https://www.onoffmix.com/account/opened/event",
     // external 모드에서 true이면 이 페이지의 신청 폼을 숨기고 외부 제공자가 신청정보를 받습니다.
     providerHandlesForm: true,
     endpoint: "",
@@ -161,7 +164,7 @@ window.NETWORKING_SITE_CONFIG = {
     {
       question: "신청만 하면 참여가 확정되나요?",
       answer:
-        "아닙니다. 유료 회차는 참가비까지 확인된 뒤에 확정 메시지를 보내드립니다.",
+        "유료 회차는 외부 신청 페이지에서 결제까지 완료해야 참여가 확정됩니다. 신청·결제 상태는 외부 플랫폼의 신청 내역에서 확인할 수 있습니다.",
     },
     {
       question: "퇴근 후 조금 늦게 도착해도 되나요?",
@@ -171,7 +174,7 @@ window.NETWORKING_SITE_CONFIG = {
     {
       question: "취소와 환불은 어떻게 하나요?",
       answer:
-        "환불 마감일과 방법은 참가비를 받기 전에 신청 페이지에서 먼저 안내하겠습니다. 지금은 일정과 참가비가 확정되지 않았습니다.",
+        "환불 마감일과 방법은 결제 전에 외부 신청 페이지에서 안내합니다. 신청 뒤에는 해당 페이지의 신청 내역에서 취소·환불을 요청할 수 있습니다.",
     },
     {
       question: "참가자 정보는 다른 사람에게 공개되나요?",
@@ -199,6 +202,9 @@ window.NETWORKING_SITE_CONFIG = {
       address: "",
       priceLabel: "마감",
       capacity: 50,
+      registrationProvider: "onoffmix",
+      registrationUrl: "",
+      locationNotice: "지난 회차입니다.",
       applicationLabel: "신청 마감",
       programDescription: "지난 회차에 진행한 순서입니다.",
       agenda: [
@@ -224,11 +230,14 @@ window.NETWORKING_SITE_CONFIG = {
       dateLabel: "2026년 9월 17일(목) · 예시안",
       time: "19:00 입장 · 19:30 시작",
       venue: "건대입구 인근 · 장소 협의 중",
-      address: "실제 장소 확정 후 입력",
+      address: "",
       priceLabel: "참가비 확정 전",
       capacity: 60,
-      applicationLabel: "참가 신청하기",
-      applicationCopy: "아래 내용을 보내고 참가비가 확인되면 자리를 확정해 드립니다.",
+      registrationProvider: "onoffmix",
+      registrationUrl: "",
+      locationNotice: "정확한 장소는 신청·결제 완료자에게 운영자가 별도로 안내합니다.",
+      applicationLabel: "신청·결제하기",
+      applicationCopy: "외부 신청 페이지에서 참가자 정보와 결제를 한 번에 완료하면 참여가 확정됩니다.",
       aboutIntro:
         "학교생활, 프로젝트, 취업, 회사에서 겪은 일을 편하게 나눕니다. 발표를 잘하거나 아는 사람이 많지 않아도 됩니다.",
       quote: "선후배끼리 얼굴 한 번 보고, 다음에 연락할 수 있으면 충분합니다.",
@@ -260,6 +269,9 @@ window.NETWORKING_SITE_CONFIG = {
       address: "",
       priceLabel: "추후 공개",
       capacity: 60,
+      registrationProvider: "onoffmix",
+      registrationUrl: "",
+      locationNotice: "정확한 장소는 신청이 열린 뒤 확정자에게만 안내합니다.",
       applicationLabel: "오픈 예정",
       programDescription: "일정과 순서는 Q3 모임 뒤에 정하겠습니다.",
       agenda: [

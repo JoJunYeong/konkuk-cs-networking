@@ -10,17 +10,17 @@
     <meta name="theme-color" content="#153d32" />
     <title>KU CSE Quarterly Network</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260827-admin" />
-    <script src="./config/site.config.js?v=20260827-admin"></script>
-    <script src="./config/firebase.config.js?v=20260827-admin"></script>
-    <script defer src="./assets/app.js?v=20260827-admin"></script>
+    <link rel="stylesheet" href="./assets/styles.css?v=20260902-registration" />
+    <script src="./config/site.config.js?v=20260902-registration"></script>
+    <script src="./config/firebase.config.js?v=20260902-registration"></script>
+    <script defer src="./assets/app.js?v=20260902-registration"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
 
     <div class="preview-banner" id="preview-banner" hidden>
       <div class="page-shell preview-banner__inner">
-        <p><strong>시험 운영 중</strong> 아래 일정은 확정 전입니다. 신청서를 작성해도 저장되거나 전송되지 않습니다.</p>
+        <p><strong id="banner-title">신청 준비 중</strong> <span id="banner-copy">신청·결제 링크를 연결하고 있습니다. 이 페이지에서는 개인정보를 받지 않습니다.</span></p>
         <button class="text-button text-button--light" id="open-customizer" type="button">
           화면에서 커스텀
         </button>
@@ -51,10 +51,10 @@
           <a href="#archive">지난 기록</a>
           <a href="#about">모임 소개</a>
           <a href="#program">이번 순서</a>
-          <a href="#apply">참가 신청</a>
+          <a href="#apply">신청·결제</a>
         </nav>
 
-        <a class="button button--small button--ink header-cta" href="#apply">이번 분기 신청</a>
+        <a class="button button--small button--ink header-cta" id="header-cta" href="#apply">신청·결제</a>
       </div>
     </header>
 
@@ -85,7 +85,7 @@
             </p>
 
             <div class="hero__actions">
-              <a class="button button--accent" id="primary-cta" href="#apply">참가 신청하기</a>
+              <a class="button button--accent" id="primary-cta" href="#apply">신청·결제하기</a>
               <button class="button button--line" id="share-button" type="button">행사 링크 공유</button>
             </div>
 
@@ -121,6 +121,20 @@
               <span>QUARTERLY GATHERING</span>
             </div>
           </aside>
+        </div>
+      </section>
+
+      <section class="registration-path" id="registration-path" aria-label="참가 신청 진행 순서">
+        <div class="page-shell registration-path__inner">
+          <div class="registration-path__intro">
+            <p class="eyebrow eyebrow--dark">ONE SIMPLE FLOW</p>
+            <strong>신청부터 장소 안내까지 한곳에서</strong>
+          </div>
+          <ol class="registration-path__steps">
+            <li><span>01</span><strong>참가 신청</strong><small>필요한 정보만 입력</small></li>
+            <li><span>02</span><strong>결제·참여 확정</strong><small>입금 대조 없이 자동 확인</small></li>
+            <li><span>03</span><strong>장소·입장 안내</strong><small>확정자에게 이메일·문자 공지</small></li>
+          </ol>
         </div>
       </section>
 
@@ -244,13 +258,38 @@
             <div class="flow-note">
               <span>01 신청</span>
               <i aria-hidden="true">→</i>
-              <span>02 결제 확인</span>
+              <span>02 결제·확정</span>
               <i aria-hidden="true">→</i>
-              <span>03 확정 메시지</span>
+              <span>03 장소 공지</span>
             </div>
+            <p class="location-note" id="location-note">정확한 장소는 신청·결제 완료자에게 별도로 안내합니다.</p>
           </div>
 
           <div class="form-card">
+            <div class="managed-registration" id="managed-registration" hidden>
+              <div class="managed-registration__topline">
+                <span>MANAGED REGISTRATION</span>
+                <span class="provider-status" id="provider-status">연결 준비 중</span>
+              </div>
+              <div class="managed-registration__body">
+                <p class="eyebrow eyebrow--dark" id="provider-name">온오프믹스</p>
+                <h3 id="provider-heading">신청과 결제를 한 번에 완료하세요.</h3>
+                <p class="managed-registration__lead">
+                  참가자 정보와 결제는 외부 행사 플랫폼에서 안전하게 처리합니다. 이 사이트에는 개인정보나 카드 정보를 입력하지 않습니다.
+                </p>
+                <ul class="managed-registration__benefits">
+                  <li><strong>자동 확인</strong><span>결제가 끝나면 신청 상태에 바로 반영됩니다.</span></li>
+                  <li><strong>한곳에서 관리</strong><span>신청 내역, 취소와 환불 상태를 함께 확인합니다.</span></li>
+                  <li><strong>확정자 공지</strong><span>운영자가 장소와 입장 안내를 이메일·문자로 보냅니다.</span></li>
+                </ul>
+                <a class="button button--accent button--full" id="provider-cta" href="#apply" aria-disabled="true">
+                  신청 링크 준비 중
+                </a>
+                <p class="managed-registration__footnote" id="provider-footnote">
+                  일정·참가비·환불 기준을 확정한 뒤 신청 링크가 열립니다.
+                </p>
+              </div>
+            </div>
             <div class="form-card__status" id="form-status" role="status" aria-live="polite"></div>
             <form id="registration-form" novalidate>
               <div class="form-heading">
@@ -310,16 +349,16 @@
           <p id="footer-note">건국대학교 공식 행사가 아닌 동문 주도 네트워킹 프로젝트입니다.</p>
         </div>
         <div class="site-footer__links">
-          <a id="contact-link" href="mailto:organizer@example.com">운영 문의</a>
+          <a id="contact-link" href="#" hidden>운영 문의</a>
           <a href="#archive">지난 기록</a>
-          <a href="#apply">참가 신청</a>
+          <a href="#apply">신청·결제</a>
           <a href="./admin.html" rel="nofollow">관리자</a>
           <button id="footer-share" type="button">링크 공유</button>
         </div>
       </div>
     </footer>
 
-    <a class="mobile-cta" href="#apply" id="mobile-cta">이번 분기 신청하기</a>
+    <a class="mobile-cta" href="#apply" id="mobile-cta">신청·결제하기</a>
 
     <dialog class="modal" id="result-dialog" aria-labelledby="result-title">
       <button class="modal__close" type="button" data-close-dialog aria-label="닫기">×</button>

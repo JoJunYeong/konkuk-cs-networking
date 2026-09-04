@@ -7,6 +7,31 @@ service cloud.firestore {
         && request.auth.uid == 'uk5noSfHHMU3y9l7CPkG5F0YRl33';
     }
 
+    function validShortString(value, maxSize) {
+      return value is string && value.size() > 0 && value.size() <= maxSize;
+    }
+
+    function validRegistrationId(registrationId) {
+      return registrationId.matches('^[a-f0-9]{32}$');
+    }
+
+    function registrationGatePath(eventId) {
+      return /databases/$(database)/documents/registrationGates/$(eventId);
+    }
+
+    function registrationPath(registrationId) {
+      return /databases/$(database)/documents/registrations/$(registrationId);
+    }
+
+    function manualRegistrationOpen(eventId, amount) {
+      return eventId is string
+        && eventId.matches('^[0-9]{4}-Q[1-4]$')
+        && exists(registrationGatePath(eventId))
+        && get(registrationGatePath(eventId)).data.accepting == true
+        && get(registrationGatePath(eventId)).data.mode == 'manual_transfer'
+        && get(registrationGatePath(eventId)).data.amount == amount;
+    }
+
     match /siteData/{documentId} {
       allow read: if documentId == 'events' || documentId == 'history';
       allow create, update: if isAdmin()
@@ -15,6 +40,67 @@ service cloud.firestore {
         && request.resource.data.payload is string
         && request.resource.data.payload.size() < 500000;
       allow delete: if false;
+    }
+
+    // 관리자가 회차 저장 시 함께 갱신합니다. 공개 신청은 이 문서가 명시적으로
+    // accepting=true인 자체 계좌이체 회차에만 생성할 수 있습니다.
+    match /registrationGates/{eventId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /registrations/{registrationId} {
+      allow create: if validRegistrationId(registrationId)
+        && request.resource.data.keys().hasOnly([
+          'eventId', 'eventQuarter', 'status', 'name', 'phone', 'phoneDigits',
+          'depositorName', 'amount', 'paymentReported', 'privacyConsent',
+          'consentVersion', 'createdAt', 'clientTimezone', 'source'
+        ])
+        && manualRegistrationOpen(
+          request.resource.data.eventId,
+          request.resource.data.amount
+        )
+        && validShortString(request.resource.data.eventQuarter, 40)
+        && request.resource.data.status == 'payment_reported'
+        && validShortString(request.resource.data.name, 40)
+        && validShortString(request.resource.data.phone, 24)
+        && request.resource.data.phoneDigits is string
+        && request.resource.data.phoneDigits.matches('^01[0-9]{8,9}$')
+        && validShortString(request.resource.data.depositorName, 40)
+        && request.resource.data.amount is int
+        && request.resource.data.amount > 0
+        && request.resource.data.amount <= 1000000
+        && request.resource.data.paymentReported == true
+        && request.resource.data.privacyConsent == true
+        && validShortString(request.resource.data.consentVersion, 40)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.clientTimezone is string
+        && request.resource.data.clientTimezone.size() <= 80
+        && request.resource.data.source == 'public_web';
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /refundRequests/{registrationId} {
+      allow create: if validRegistrationId(registrationId)
+        && exists(registrationPath(registrationId))
+        && request.resource.data.keys().hasOnly([
+          'registrationId', 'eventId', 'status', 'phoneDigits', 'refundBank',
+          'refundAccount', 'refundAccountHolder', 'refundConsent', 'createdAt', 'source'
+        ])
+        && request.resource.data.registrationId == registrationId
+        && request.resource.data.eventId == get(registrationPath(registrationId)).data.eventId
+        && request.resource.data.phoneDigits == get(registrationPath(registrationId)).data.phoneDigits
+        && get(registrationPath(registrationId)).data.status in ['payment_reported', 'confirmed']
+        && request.resource.data.status == 'refund_requested'
+        && request.resource.data.phoneDigits is string
+        && request.resource.data.phoneDigits.matches('^01[0-9]{8,9}$')
+        && validShortString(request.resource.data.refundBank, 30)
+        && request.resource.data.refundAccount is string
+        && request.resource.data.refundAccount.matches('^[0-9]{8,20}$')
+        && validShortString(request.resource.data.refundAccountHolder, 40)
+        && request.resource.data.refundConsent == true
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.source == 'public_web';
+      allow read, update, delete: if isAdmin();
     }
 
     match /{document=**} {

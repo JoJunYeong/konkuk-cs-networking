@@ -8,11 +8,15 @@ import {
   signOut,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
+  collection,
+  deleteField,
   doc,
   getDoc,
+  getDocs,
   getFirestore,
   serverTimestamp,
   setDoc,
+  writeBatch,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
 const runtime = window.KU_ADMIN_FIREBASE;
@@ -59,6 +63,10 @@ const state = {
   history: { schemaVersion: 1, sourceNote: "", events: [] },
   selectedEventId: sourceConfig.events[0]?.id || "",
   selectedHistoryId: "",
+  selectedRegistrationEventId: sourceConfig.events.find((event) => event.featured)?.id || sourceConfig.events[0]?.id || "",
+  registrations: [],
+  refunds: new Map(),
+  registrationDataLoaded: false,
   ready: false,
 };
 
@@ -72,6 +80,11 @@ const elements = {
   eventSelect: $("#event-select"),
   eventLoadSummary: $("#event-load-summary"),
   eventForm: $("#event-form"),
+  registrationEventSelect: $("#registration-event-select"),
+  registrationRows: $("#registration-rows"),
+  registrationEmpty: $("#registration-empty"),
+  bankTransactions: $("#bank-transactions"),
+  matchStatus: $("#match-status"),
   historySelect: $("#history-select"),
   historyForm: $("#history-form"),
 };
@@ -111,6 +124,59 @@ async function writePayload(name, payload) {
   });
 }
 
+function eventRegistrationMode(event) {
+  const mode = event?.registrationMode || sourceConfig.registration?.mode || "external";
+  return mode === "manual_transfer" ? "manual_transfer" : "external";
+}
+
+function bankTransferReady(event) {
+  const amount = Number(event?.paymentAmount);
+  return Boolean(
+    String(event?.bankName || "").trim()
+    && String(event?.bankAccountHolder || "").trim()
+    && String(event?.bankAccountNumber || "").trim()
+    && Number.isInteger(amount)
+    && amount > 0,
+  );
+}
+
+async function writeEventsAndGates(events) {
+  const gateSnapshots = await getDocs(collection(db, "registrationGates"));
+  const currentIds = new Set(events.map((event) => event.id));
+  const batch = writeBatch(db);
+
+  batch.set(documentRef("events"), {
+    payload: JSON.stringify(events),
+    updatedAt: serverTimestamp(),
+    updatedBy: runtime.adminUsername,
+  });
+
+  events.forEach((event) => {
+    const mode = eventRegistrationMode(event);
+    const amount = Number(event.paymentAmount);
+    batch.set(doc(db, "registrationGates", event.id), {
+      eventId: event.id,
+      eventQuarter: String(event.quarter || event.id).slice(0, 40),
+      mode,
+      amount: Number.isInteger(amount) && amount > 0 ? amount : 0,
+      capacity: Math.max(1, Number(event.capacity) || 1),
+      accepting: event.status === "open" && mode === "manual_transfer" && bankTransferReady(event),
+      updatedAt: serverTimestamp(),
+    });
+  });
+
+  gateSnapshots.forEach((snapshot) => {
+    if (currentIds.has(snapshot.id)) return;
+    batch.set(snapshot.ref, {
+      ...snapshot.data(),
+      accepting: false,
+      updatedAt: serverTimestamp(),
+    });
+  });
+
+  await batch.commit();
+}
+
 async function loadStaticHistory() {
   const response = await fetch("./data/history.json", { cache: "no-store" });
   if (!response.ok) throw new Error("history_fallback_failed");
@@ -135,9 +201,11 @@ async function loadDashboardData() {
   if (!managedHistory) await writePayload("history", state.history);
 
   state.selectedEventId = initialEventId(state.events);
+  state.selectedRegistrationEventId = state.selectedEventId;
   state.selectedHistoryId = state.history.events[0]?.id || "";
   state.ready = true;
   renderEventSelect();
+  renderRegistrationEventSelect();
   renderHistorySelect();
   const currentOrFutureCount = state.events.filter(isCurrentOrFutureEvent).length;
   const selected = currentEvent();
@@ -212,8 +280,15 @@ function renderEventSelect() {
   state.events.forEach((event) => {
     const option = document.createElement("option");
     option.value = event.id;
-    const linkWarning = event.status === "open" && !event.registrationUrl ? " · 신청 링크 없음" : "";
-    option.textContent = `${event.quarter} · ${event.statusLabel}${linkWarning}`;
+    const mode = eventRegistrationMode(event);
+    const routeWarning = event.status !== "open"
+      ? ""
+      : mode === "manual_transfer" && !bankTransferReady(event)
+        ? " · 입금 계좌 없음"
+        : mode === "external" && !event.registrationUrl
+          ? " · 신청 링크 없음"
+          : "";
+    option.textContent = `${event.quarter} · ${event.statusLabel}${routeWarning}`;
     option.selected = event.id === state.selectedEventId;
     elements.eventSelect.append(option);
   });
@@ -229,8 +304,10 @@ function renderEventForm() {
   [
     "id", "quarter", "sequence", "status", "statusLabel", "titleLineOne", "titleLineTwo",
     "description", "notice", "dateLabel", "time", "venue", "locationNotice", "priceLabel",
-    "capacity", "registrationUrl", "applicationLabel", "applicationCopy", "aboutIntro", "quote", "programDescription",
+    "capacity", "registrationUrl", "bankName", "bankAccountHolder", "bankAccountNumber",
+    "paymentAmount", "refundDeadlineLabel", "applicationLabel", "applicationCopy", "aboutIntro", "quote", "programDescription",
   ].forEach((name) => setValue(elements.eventForm, name, event[name]));
+  setValue(elements.eventForm, "registrationMode", eventRegistrationMode(event));
   setValue(
     elements.eventForm,
     "registrationProvider",
@@ -238,7 +315,15 @@ function renderEventForm() {
   );
   setValue(elements.eventForm, "featured", event.featured);
   setValue(elements.eventForm, "agenda", agendaToText(event.agenda));
+  updateRegistrationModeFields();
   elements.eventLoadSummary.textContent = `${event.quarter}에 저장된 자료를 아래 입력칸에 불러왔습니다.`;
+}
+
+function updateRegistrationModeFields() {
+  const mode = value(elements.eventForm, "registrationMode") || "external";
+  $$('[data-registration-mode-fields]', elements.eventForm).forEach((section) => {
+    section.hidden = section.dataset.registrationModeFields !== mode;
+  });
 }
 
 function collectEventForm() {
@@ -248,12 +333,14 @@ function collectEventForm() {
   [
     "id", "quarter", "sequence", "status", "statusLabel", "titleLineOne", "titleLineTwo",
     "description", "notice", "dateLabel", "time", "venue", "locationNotice", "priceLabel",
-    "registrationProvider", "registrationUrl", "applicationLabel", "applicationCopy", "aboutIntro", "quote", "programDescription",
+    "registrationMode", "registrationProvider", "registrationUrl", "bankName", "bankAccountHolder",
+    "bankAccountNumber", "refundDeadlineLabel", "applicationLabel", "applicationCopy", "aboutIntro", "quote", "programDescription",
   ].forEach((name) => {
     event[name] = value(elements.eventForm, name);
   });
   event.address = "";
   event.capacity = Number(elements.eventForm.elements.capacity.value) || 1;
+  event.paymentAmount = Number(elements.eventForm.elements.paymentAmount.value) || 0;
   event.featured = elements.eventForm.elements.featured.checked;
   event.agenda = textToAgenda(elements.eventForm.elements.agenda.value);
   event.revision = Date.now();
@@ -294,8 +381,14 @@ function addEvent() {
     address: "",
     priceLabel: "참가비 확정 전",
     capacity: 40,
+    registrationMode: "manual_transfer",
     registrationProvider: "onoffmix",
     registrationUrl: "",
+    bankName: "",
+    bankAccountHolder: "",
+    bankAccountNumber: "",
+    paymentAmount: 0,
+    refundDeadlineLabel: "추후 공개",
     locationNotice: "정확한 장소는 신청·결제 완료자에게 운영자가 별도로 안내합니다.",
     applicationLabel: "오픈 예정",
     applicationCopy: "신청 시작일이 정해지면 이곳에서 안내하겠습니다.",
@@ -331,7 +424,8 @@ function validateEvents() {
     ids.add(event.id);
     if (!event.quarter || !event.titleLineOne || !event.dateLabel || !event.venue) throw new Error("필수 항목을 모두 입력해 주세요.");
     if (!Number.isFinite(event.capacity) || event.capacity < 1) throw new Error("정원을 확인해 주세요.");
-    if (event.registrationUrl) {
+    const mode = eventRegistrationMode(event);
+    if (mode === "external" && event.registrationUrl) {
       let parsed;
       try {
         parsed = new URL(event.registrationUrl);
@@ -339,6 +433,24 @@ function validateEvents() {
         throw new Error("신청 URL 형식을 확인해 주세요.");
       }
       if (parsed.protocol !== "https:") throw new Error("신청 URL은 https:// 주소만 사용할 수 있습니다.");
+    }
+    if (mode === "external" && event.status === "open" && !event.registrationUrl) {
+      throw new Error(`${event.quarter} 외부 신청 URL을 입력해 주세요.`);
+    }
+    if (mode === "manual_transfer") {
+      const accountDigits = String(event.bankAccountNumber || "").replace(/\D/g, "");
+      if (event.bankAccountNumber && !/^\d{8,20}$/.test(accountDigits)) {
+        throw new Error(`${event.quarter} 계좌번호를 확인해 주세요.`);
+      }
+      if (event.paymentAmount && (!Number.isInteger(event.paymentAmount) || event.paymentAmount < 1 || event.paymentAmount > 1000000)) {
+        throw new Error(`${event.quarter} 입금액을 확인해 주세요.`);
+      }
+      if (event.status === "open" && !bankTransferReady(event)) {
+        throw new Error(`${event.quarter} 은행·예금주·계좌번호·입금액을 모두 입력해야 신청을 열 수 있습니다.`);
+      }
+      if (event.status === "open" && !event.refundDeadlineLabel) {
+        throw new Error(`${event.quarter} 환불 요청 마감을 입력해 주세요.`);
+      }
     }
   }
   if (!state.events.some((event) => event.featured)) state.events[0].featured = true;
@@ -355,12 +467,13 @@ async function saveEvents(event) {
   try {
     collectEventForm();
     validateEvents();
-    await writePayload("events", state.events);
+    await writeEventsAndGates(state.events);
     renderEventSelect();
-    const openWithoutLink = state.events.some((item) => item.status === "open" && !item.registrationUrl);
+    renderRegistrationEventSelect();
+    const saved = currentEvent();
     showSyncStatus(
-      openWithoutLink
-        ? "행사 내용은 저장했습니다. ‘신청 가능’ 회차에 신청 URL이 없어 공개 버튼은 아직 열리지 않습니다."
+      saved && eventRegistrationMode(saved) === "manual_transfer" && saved.status === "open"
+        ? "행사와 자체 계좌이체 모집 게이트를 함께 저장했습니다. 공개 페이지에서 신청을 받을 수 있습니다."
         : "분기별 행사 내용을 저장했습니다. 공개 신청 버튼에도 반영됩니다.",
       false,
     );
@@ -368,6 +481,363 @@ async function saveEvents(event) {
     showSyncStatus(error?.message || "행사 내용을 저장하지 못했습니다.", true);
   } finally {
     setBusy(elements.eventForm, false);
+  }
+}
+
+function renderRegistrationEventSelect() {
+  if (!state.events.some((event) => event.id === state.selectedRegistrationEventId)) {
+    state.selectedRegistrationEventId = state.selectedEventId || state.events[0]?.id || "";
+  }
+  elements.registrationEventSelect.replaceChildren();
+  state.events.forEach((event) => {
+    const option = document.createElement("option");
+    option.value = event.id;
+    option.textContent = `${event.quarter} · ${event.statusLabel}`;
+    option.selected = event.id === state.selectedRegistrationEventId;
+    elements.registrationEventSelect.append(option);
+  });
+  if (state.registrationDataLoaded) renderRegistrationRows();
+}
+
+function registrationCreatedAt(registration) {
+  if (typeof registration.createdAt?.toDate === "function") return registration.createdAt.toDate();
+  const seconds = Number(registration.createdAt?.seconds);
+  return Number.isFinite(seconds) ? new Date(seconds * 1000) : null;
+}
+
+function formatRegistrationTime(registration) {
+  const date = registrationCreatedAt(registration);
+  if (!date || Number.isNaN(date.getTime())) return "시간 확인 중";
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function formatAmount(amount) {
+  const value = Number(amount);
+  return Number.isFinite(value) ? `${value.toLocaleString("ko-KR")}원` : "—";
+}
+
+function registrationStatusLabel(status) {
+  return {
+    payment_reported: "입금확인 대기",
+    confirmed: "참여 확정",
+    refund_completed: "환불 완료",
+    canceled_unpaid: "미입금 취소",
+  }[status] || status || "상태 미상";
+}
+
+function statusBadgeClass(status) {
+  if (status === "confirmed") return "status-badge status-badge--confirmed";
+  if (["refund_completed", "canceled_unpaid"].includes(status)) return "status-badge status-badge--refund";
+  return "status-badge status-badge--pending";
+}
+
+function selectedEventRegistrations() {
+  return state.registrations
+    .filter((registration) => registration.eventId === state.selectedRegistrationEventId)
+    .sort((a, b) => (registrationCreatedAt(b)?.getTime() || 0) - (registrationCreatedAt(a)?.getTime() || 0));
+}
+
+function appendTextCell(row, text) {
+  const cell = document.createElement("td");
+  cell.textContent = text;
+  row.append(cell);
+  return cell;
+}
+
+function renderRefundCell(cell, registration) {
+  const refund = state.refunds.get(registration.id);
+  if (!refund) {
+    cell.textContent = "—";
+    return;
+  }
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "refund-cell";
+  const badge = document.createElement("span");
+  badge.className = "status-badge status-badge--refund";
+  badge.textContent = refund.status === "refund_requested"
+    ? "환불 요청"
+    : refund.status === "refunded"
+      ? "환불 완료"
+      : "미입금 취소";
+  wrapper.append(badge);
+
+  if (refund.status === "refund_requested") {
+    const account = document.createElement("small");
+    account.textContent = `${refund.refundBank} · ${refund.refundAccount} · ${refund.refundAccountHolder}`;
+    wrapper.append(account);
+
+    const complete = document.createElement("button");
+    complete.type = "button";
+    complete.className = "admin-button admin-button--primary";
+    complete.dataset.refundAction = "complete";
+    complete.dataset.registrationId = registration.id;
+    complete.textContent = "송금 후 환불 완료";
+
+    const unpaid = document.createElement("button");
+    unpaid.type = "button";
+    unpaid.className = "admin-button";
+    unpaid.dataset.refundAction = "unpaid";
+    unpaid.dataset.registrationId = registration.id;
+    unpaid.textContent = "실제 미입금으로 취소";
+    wrapper.append(complete, unpaid);
+  } else {
+    const resolved = document.createElement("small");
+    resolved.textContent = refund.refundAccountLast4
+      ? `파기된 계좌 끝 4자리 ${refund.refundAccountLast4}`
+      : "환불 계좌정보 파기 완료";
+    wrapper.append(resolved);
+  }
+
+  cell.append(wrapper);
+}
+
+function renderRegistrationRows() {
+  const registrations = selectedEventRegistrations();
+  elements.registrationRows.replaceChildren();
+  elements.registrationEmpty.hidden = registrations.length > 0;
+  elements.registrationRows.closest(".registration-table-wrap").hidden = registrations.length === 0;
+
+  registrations.forEach((registration) => {
+    const refund = state.refunds.get(registration.id);
+    const row = document.createElement("tr");
+    row.dataset.registrationId = registration.id;
+
+    const selectCell = document.createElement("td");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.dataset.registrationSelect = registration.id;
+    checkbox.setAttribute("aria-label", `${registration.name} 입금확정 선택`);
+    checkbox.disabled = registration.status !== "payment_reported" || refund?.status === "refund_requested";
+    checkbox.addEventListener("change", () => row.classList.toggle("is-matched", checkbox.checked));
+    selectCell.append(checkbox);
+    row.append(selectCell);
+
+    appendTextCell(row, formatRegistrationTime(registration));
+
+    const personCell = document.createElement("td");
+    const person = document.createElement("div");
+    person.className = "registration-person";
+    const name = document.createElement("strong");
+    name.textContent = registration.name || "—";
+    const phone = document.createElement("small");
+    phone.textContent = registration.phone || registration.phoneDigits || "—";
+    const code = document.createElement("small");
+    code.textContent = `신청번호 ${registration.id}`;
+    person.append(name, phone, code);
+    personCell.append(person);
+    row.append(personCell);
+
+    appendTextCell(row, registration.depositorName || "—");
+    appendTextCell(row, formatAmount(registration.amount));
+
+    const statusCell = document.createElement("td");
+    const status = document.createElement("span");
+    status.className = statusBadgeClass(registration.status);
+    status.textContent = registrationStatusLabel(registration.status);
+    statusCell.append(status);
+    row.append(statusCell);
+
+    const refundCell = document.createElement("td");
+    renderRefundCell(refundCell, registration);
+    row.append(refundCell);
+    elements.registrationRows.append(row);
+  });
+
+  const activeRefunds = registrations.filter(
+    (registration) => state.refunds.get(registration.id)?.status === "refund_requested",
+  ).length;
+  $("#stat-total").textContent = String(registrations.length);
+  $("#stat-pending").textContent = String(registrations.filter((item) => item.status === "payment_reported").length);
+  $("#stat-confirmed").textContent = String(registrations.filter((item) => item.status === "confirmed").length);
+  $("#stat-refunds").textContent = String(activeRefunds);
+}
+
+async function loadRegistrationData() {
+  elements.matchStatus.textContent = "신청자와 환불 요청을 불러오는 중입니다.";
+  elements.matchStatus.classList.remove("is-error");
+  try {
+    const [registrationSnapshots, refundSnapshots] = await Promise.all([
+      getDocs(collection(db, "registrations")),
+      getDocs(collection(db, "refundRequests")),
+    ]);
+    state.registrations = registrationSnapshots.docs.map((snapshot) => ({ id: snapshot.id, ...snapshot.data() }));
+    state.refunds = new Map(
+      refundSnapshots.docs.map((snapshot) => [snapshot.id, { id: snapshot.id, ...snapshot.data() }]),
+    );
+    state.registrationDataLoaded = true;
+    renderRegistrationRows();
+    elements.matchStatus.textContent = "최신 신청 자료를 불러왔습니다. 붙여 넣은 은행 내역은 저장하지 않습니다.";
+  } catch (_error) {
+    elements.matchStatus.textContent = "신청 자료를 불러오지 못했습니다. 보안 규칙과 로그인 상태를 확인해 주세요.";
+    elements.matchStatus.classList.add("is-error");
+  }
+}
+
+function normalizedDepositorName(value) {
+  return String(value || "").normalize("NFKC").toLowerCase().replace(/\s+/g, "");
+}
+
+function parseBankTransactions(raw) {
+  const parsed = [];
+  let invalid = 0;
+  String(raw || "").split("\n").map((line) => line.trim()).filter(Boolean).forEach((line) => {
+    const parts = line.includes("\t")
+      ? line.split("\t")
+      : line.includes("|")
+        ? line.split("|")
+        : [];
+    if (parts.length < 2) {
+      invalid += 1;
+      return;
+    }
+    const name = parts[0].trim();
+    const amountText = parts.at(-1).replace(/[^0-9-]/g, "");
+    const amount = Number(amountText);
+    if (!name || !Number.isInteger(amount) || amount <= 0) {
+      invalid += 1;
+      return;
+    }
+    parsed.push({ name, amount });
+  });
+  return { parsed, invalid };
+}
+
+function matchTransactions() {
+  const { parsed, invalid } = parseBankTransactions(elements.bankTransactions.value);
+  $$('[data-registration-select]', elements.registrationRows).forEach((checkbox) => {
+    checkbox.checked = false;
+    checkbox.closest("tr").classList.remove("is-matched");
+  });
+
+  if (parsed.length === 0) {
+    elements.matchStatus.textContent = "입금자명과 금액 두 열을 탭으로 구분해 한 줄씩 붙여 넣어 주세요.";
+    elements.matchStatus.classList.add("is-error");
+    return;
+  }
+
+  const pending = selectedEventRegistrations().filter((registration) => {
+    return registration.status === "payment_reported"
+      && state.refunds.get(registration.id)?.status !== "refund_requested";
+  });
+  const transactionsByKey = new Map();
+  parsed.forEach((transaction) => {
+    const key = `${normalizedDepositorName(transaction.name)}:${transaction.amount}`;
+    transactionsByKey.set(key, (transactionsByKey.get(key) || 0) + 1);
+  });
+  const registrationsByKey = new Map();
+  pending.forEach((registration) => {
+    const key = `${normalizedDepositorName(registration.depositorName)}:${Number(registration.amount)}`;
+    const items = registrationsByKey.get(key) || [];
+    items.push(registration);
+    registrationsByKey.set(key, items);
+  });
+
+  let matched = 0;
+  let ambiguous = 0;
+  let unmatched = 0;
+  transactionsByKey.forEach((transactionCount, key) => {
+    const candidates = registrationsByKey.get(key) || [];
+    if (transactionCount === 1 && candidates.length === 1) {
+      const checkbox = $(`[data-registration-select="${candidates[0].id}"]`, elements.registrationRows);
+      if (checkbox && !checkbox.disabled) {
+        checkbox.checked = true;
+        checkbox.closest("tr").classList.add("is-matched");
+        matched += 1;
+      }
+    } else if (candidates.length > 0) {
+      ambiguous += transactionCount;
+    } else {
+      unmatched += transactionCount;
+    }
+  });
+
+  elements.matchStatus.classList.toggle("is-error", matched === 0);
+  elements.matchStatus.textContent = `자동 선택 ${matched}건 · 중복/동명이인 ${ambiguous}건 · 신청과 불일치 ${unmatched}건${invalid ? ` · 형식 오류 ${invalid}줄` : ""}. 확정 전 선택 건을 확인하세요.`;
+}
+
+async function confirmSelectedRegistrations() {
+  const ids = $$('[data-registration-select]:checked', elements.registrationRows).map(
+    (checkbox) => checkbox.dataset.registrationSelect,
+  );
+  if (ids.length === 0) {
+    elements.matchStatus.textContent = "입금확정할 신청을 먼저 선택해 주세요.";
+    elements.matchStatus.classList.add("is-error");
+    return;
+  }
+
+  const event = state.events.find((item) => item.id === state.selectedRegistrationEventId);
+  const confirmedCount = selectedEventRegistrations().filter((item) => item.status === "confirmed").length;
+  if (event && confirmedCount + ids.length > Number(event.capacity || 0)) {
+    elements.matchStatus.textContent = "선택 건을 확정하면 정원을 넘습니다. 신청 상태와 정원을 먼저 확인해 주세요.";
+    elements.matchStatus.classList.add("is-error");
+    return;
+  }
+  if (!window.confirm(`${ids.length}건의 실제 입금자명과 금액을 은행 내역에서 확인했나요? 확인한 건만 참여 확정합니다.`)) return;
+
+  const button = $("#confirm-selected");
+  button.disabled = true;
+  try {
+    const batch = writeBatch(db);
+    ids.forEach((registrationId) => {
+      batch.update(doc(db, "registrations", registrationId), {
+        status: "confirmed",
+        confirmedAt: serverTimestamp(),
+        confirmedBy: runtime.adminUsername,
+      });
+    });
+    await batch.commit();
+    elements.bankTransactions.value = "";
+    await loadRegistrationData();
+    elements.matchStatus.textContent = `${ids.length}건을 참여 확정으로 기록했습니다.`;
+  } catch (_error) {
+    elements.matchStatus.textContent = "입금확정 상태를 저장하지 못했습니다. 새로고침 후 다시 확인해 주세요.";
+    elements.matchStatus.classList.add("is-error");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function resolveRefund(registrationId, outcome) {
+  const registration = state.registrations.find((item) => item.id === registrationId);
+  const refund = state.refunds.get(registrationId);
+  if (!registration || !refund || refund.status !== "refund_requested") return;
+
+  const completed = outcome === "complete";
+  const prompt = completed
+    ? `${registration.name}님에게 ${refund.refundBank} ${refund.refundAccount} 계좌로 실제 환불 송금을 완료했나요?`
+    : `${registration.name}님의 실제 입금이 없음을 은행 내역에서 확인했나요? 환불 없이 신청을 취소합니다.`;
+  if (!window.confirm(prompt)) return;
+
+  try {
+    const batch = writeBatch(db);
+    batch.update(doc(db, "registrations", registrationId), {
+      status: completed ? "refund_completed" : "canceled_unpaid",
+      refundedAt: serverTimestamp(),
+      refundedBy: runtime.adminUsername,
+    });
+    batch.update(doc(db, "refundRequests", registrationId), {
+      status: completed ? "refunded" : "resolved_unpaid",
+      refundAccountLast4: String(refund.refundAccount || "").slice(-4),
+      refundBank: deleteField(),
+      refundAccount: deleteField(),
+      refundAccountHolder: deleteField(),
+      resolvedAt: serverTimestamp(),
+      resolvedBy: runtime.adminUsername,
+    });
+    await batch.commit();
+    await loadRegistrationData();
+    elements.matchStatus.textContent = completed
+      ? "환불 완료를 기록하고 환불 계좌정보를 파기했습니다."
+      : "미입금 취소를 기록하고 환불 계좌정보를 파기했습니다.";
+  } catch (_error) {
+    elements.matchStatus.textContent = "환불 처리 상태를 저장하지 못했습니다. 실제 송금 여부를 다시 확인해 주세요.";
+    elements.matchStatus.classList.add("is-error");
   }
 }
 
@@ -478,6 +948,7 @@ function switchTab(name) {
   $$('[data-admin-panel]').forEach((panel) => {
     panel.hidden = panel.dataset.adminPanel !== name;
   });
+  if (name === "registrations" && !state.registrationDataLoaded) loadRegistrationData();
 }
 
 async function login(event) {
@@ -520,6 +991,11 @@ async function showDashboard(user) {
 
 function showLogin() {
   state.ready = false;
+  state.registrations = [];
+  state.refunds = new Map();
+  state.registrationDataLoaded = false;
+  elements.registrationRows.replaceChildren();
+  elements.bankTransactions.value = "";
   elements.dashboard.hidden = true;
   elements.loginPanel.hidden = false;
 }
@@ -537,7 +1013,21 @@ elements.historySelect.addEventListener("change", () => {
   renderHistoryForm();
 });
 elements.eventForm.addEventListener("submit", saveEvents);
+elements.eventForm.elements.registrationMode.addEventListener("change", updateRegistrationModeFields);
 elements.historyForm.addEventListener("submit", saveHistory);
+elements.registrationEventSelect.addEventListener("change", () => {
+  state.selectedRegistrationEventId = elements.registrationEventSelect.value;
+  renderRegistrationRows();
+});
+$("#refresh-registrations").addEventListener("click", loadRegistrationData);
+$("#match-transactions").addEventListener("click", matchTransactions);
+$("#confirm-selected").addEventListener("click", confirmSelectedRegistrations);
+elements.registrationRows.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-refund-action]");
+  if (!button) return;
+  resolveRefund(button.dataset.registrationId, button.dataset.refundAction);
+});
+$("#open-registration-desk").addEventListener("click", () => switchTab("registrations"));
 $("#add-event").addEventListener("click", addEvent);
 $("#delete-event").addEventListener("click", deleteEvent);
 $("#add-history").addEventListener("click", addHistory);

@@ -1330,6 +1330,70 @@ blockquote {
   padding: clamp(28px, 5vw, 58px);
 }
 
+.bank-transfer-card {
+  margin: 0 0 38px;
+  padding: clamp(20px, 4vw, 30px);
+  border: 1px solid var(--ink);
+  background: var(--white);
+}
+
+.bank-transfer-card__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 3px double var(--ink);
+}
+
+.bank-transfer-card__heading h3 {
+  margin: 6px 0 0;
+  font-size: clamp(23px, 3vw, 30px);
+}
+
+.bank-transfer-details {
+  margin: 18px 0;
+}
+
+.bank-transfer-details > div {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.bank-transfer-details dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.bank-transfer-details dd {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.bank-transfer-card > p {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.form-honeypot {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 .managed-registration__topline {
   min-height: 52px;
   display: flex;
@@ -1571,6 +1635,55 @@ blockquote {
   text-align: center;
 }
 
+.refund-request {
+  border-top: 1px solid var(--ink);
+  background: var(--white);
+}
+
+.refund-request > summary {
+  position: relative;
+  padding: 20px clamp(28px, 5vw, 58px);
+  font-family: var(--font-serif);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.refund-request > summary::-webkit-details-marker {
+  display: none;
+}
+
+.refund-request > summary::after {
+  position: absolute;
+  right: clamp(28px, 5vw, 58px);
+  content: "+";
+}
+
+.refund-request[open] > summary::after {
+  content: "−";
+}
+
+.refund-request form {
+  display: grid;
+  gap: 22px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.refund-request form > p:first-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.form-grid--refund {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#refund-status.is-error {
+  color: var(--accent);
+}
+
 .faq {
   border-bottom: 1px solid var(--ink);
   background: var(--white);
@@ -1751,6 +1864,10 @@ dialog {
   padding-block: 12px;
   border-bottom: 1px solid var(--line);
   font-size: 12px;
+}
+
+.modal > .button + .button {
+  margin-top: 10px;
 }
 
 .customizer {
@@ -2212,6 +2329,7 @@ dialog {
   }
 
   .form-grid,
+  .form-grid--refund,
   .customizer__split {
     grid-template-columns: 1fr;
   }

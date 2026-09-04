@@ -4,7 +4,7 @@
  * 새 분기 추가 방법:
  * 1. events 배열의 객체 하나를 복사합니다.
  * 2. id를 `YYYY-QN` 형식으로 바꾸고 featured를 새 회차에만 true로 둡니다.
- * 3. 실제 결제 연결 전까지 registration.mode는 "preview"로 유지합니다.
+ * 3. 회차별 registrationMode를 external 또는 manual_transfer로 정합니다.
  */
 window.NETWORKING_SITE_CONFIG = {
   previewMode: false,
@@ -40,6 +40,7 @@ window.NETWORKING_SITE_CONFIG = {
   registration: {
     // preview: 네트워크 요청 없이 UI만 검증
     // external: 회차별 registrationUrl 또는 providerUrl로 이동
+    // manual_transfer: 자체 신청서와 계좌이체 입금확인 요청 사용
     // api: endpoint로 신청서를 POST하고 응답의 checkoutUrl로 이동
     mode: "external",
     provider: "onoffmix",
@@ -63,6 +64,7 @@ window.NETWORKING_SITE_CONFIG = {
         placeholder: "홍길동",
         required: true,
         width: "half",
+        maxLength: 40,
       },
       {
         name: "phone",
@@ -73,61 +75,21 @@ window.NETWORKING_SITE_CONFIG = {
         required: true,
         width: "half",
         pattern: "^(?:[0-9+ ]|\\(|\\)|-){9,20}$",
+        maxLength: 20,
       },
       {
-        name: "email",
-        label: "이메일",
-        type: "email",
-        autocomplete: "email",
-        placeholder: "alumni@example.com",
-        required: true,
-        width: "full",
-      },
-      {
-        name: "graduationYear",
-        label: "입학·졸업 연도",
+        name: "depositorName",
+        label: "입금자명",
         type: "text",
         autocomplete: "off",
-        placeholder: "예: 15학번 / 2021년 졸업",
-        required: true,
-        width: "half",
-      },
-      {
-        name: "currentRole",
-        label: "현재 하는 일",
-        type: "text",
-        autocomplete: "organization-title",
-        placeholder: "예: 백엔드 개발 / 창업 준비",
-        required: true,
-        width: "half",
-      },
-      {
-        name: "interest",
-        label: "이번 모임에서 나누고 싶은 주제",
-        type: "select",
+        placeholder: "통장에 표시되는 이름",
         required: true,
         width: "full",
-        options: [
-          "커리어 전환·이직",
-          "개발·기술 트렌드",
-          "창업·사이드 프로젝트",
-          "채용·팀 빌딩",
-          "대학원·연구",
-          "가벼운 동문 교류",
-        ],
-      },
-      {
-        name: "intro",
-        label: "짧은 자기소개",
-        type: "textarea",
-        placeholder: "함께 이야기 나누고 싶은 경험이나 고민을 2~3문장으로 남겨주세요.",
-        required: false,
-        width: "full",
-        maxLength: 300,
+        maxLength: 40,
       },
     ],
     privacySummary:
-      "참가자 확인·결제 안내·행사 운영 목적으로 수집하며 행사 종료 90일 뒤 파기합니다.",
+      "수집 항목: 이름·휴대전화·입금자명. 신청 확인·입금 대조·취소 및 행사 운영에만 사용하며 행사 종료 90일 뒤 파기합니다.",
   },
 
   values: [
@@ -183,6 +145,29 @@ window.NETWORKING_SITE_CONFIG = {
     },
   ],
 
+  manualTransferFaq: [
+    {
+      question: "신청서를 내면 바로 참여가 확정되나요?",
+      answer:
+        "아닙니다. 신청서의 입금 완료 체크는 입금확인 요청입니다. 운영자가 실제 계좌 내역에서 입금자명과 금액을 확인한 뒤 참여가 확정됩니다.",
+    },
+    {
+      question: "입금자명이 신청자 이름과 달라도 되나요?",
+      answer:
+        "가능합니다. 실제 송금할 때 사용한 입금자명을 신청서에 정확히 적어 주세요. 같은 이름의 입금이 여러 건이면 확인이 늦어질 수 있습니다.",
+    },
+    {
+      question: "취소와 환불은 어떻게 하나요?",
+      answer:
+        "환불 마감 전 이 페이지의 취소·환불 요청에서 신청번호와 휴대전화, 환불 계좌를 입력해 주세요. 운영자가 확인한 뒤 계좌이체로 환불하며 처리 완료 후 계좌정보를 지웁니다.",
+    },
+    {
+      question: "참가자 정보는 다른 사람에게 공개되나요?",
+      answer:
+        "아닙니다. 이름, 휴대전화, 입금자명과 환불 계좌는 관리자만 확인할 수 있으며 행사 운영과 정산 외 목적으로 사용하지 않습니다.",
+    },
+  ],
+
   events: [
     {
       id: "2026-Q2",
@@ -202,6 +187,7 @@ window.NETWORKING_SITE_CONFIG = {
       address: "",
       priceLabel: "마감",
       capacity: 50,
+      registrationMode: "external",
       registrationProvider: "onoffmix",
       registrationUrl: "",
       locationNotice: "지난 회차입니다.",
@@ -221,7 +207,7 @@ window.NETWORKING_SITE_CONFIG = {
       status: "open",
       statusLabel: "신청 가능",
       featured: true,
-      revision: 1788354600000,
+      revision: 1788511037000,
       eyebrow: "KONKUK CSE ALUMNI · QUARTER 03",
       titleLineOne: "건국대 컴공 사람들,",
       titleLineTwo: "이번 분기에도 만나요.",
@@ -234,8 +220,14 @@ window.NETWORKING_SITE_CONFIG = {
       address: "",
       priceLabel: "10,000원",
       capacity: 100,
+      registrationMode: "external",
       registrationProvider: "onoffmix",
       registrationUrl: "https://www.onoffmix.com/event/349124",
+      bankName: "",
+      bankAccountHolder: "",
+      bankAccountNumber: "",
+      paymentAmount: 10000,
+      refundDeadlineLabel: "2026년 9월 7일 23:59",
       locationNotice: "정확한 장소는 신청·결제 완료자에게 운영자가 별도로 안내합니다.",
       applicationLabel: "신청·결제하기",
       applicationCopy:
@@ -260,6 +252,7 @@ window.NETWORKING_SITE_CONFIG = {
       status: "upcoming",
       statusLabel: "예정",
       featured: false,
+      revision: 1788511037000,
       eyebrow: "KONKUK CSE ALUMNI · QUARTER 04",
       titleLineOne: "연말 모임을",
       titleLineTwo: "준비하고 있습니다.",
@@ -271,8 +264,14 @@ window.NETWORKING_SITE_CONFIG = {
       address: "",
       priceLabel: "추후 공개",
       capacity: 60,
+      registrationMode: "manual_transfer",
       registrationProvider: "onoffmix",
       registrationUrl: "",
+      bankName: "",
+      bankAccountHolder: "",
+      bankAccountNumber: "",
+      paymentAmount: 0,
+      refundDeadlineLabel: "추후 공개",
       locationNotice: "정확한 장소는 신청이 열린 뒤 확정자에게만 안내합니다.",
       applicationLabel: "오픈 예정",
       programDescription: "일정과 순서는 Q3 모임 뒤에 정하겠습니다.",

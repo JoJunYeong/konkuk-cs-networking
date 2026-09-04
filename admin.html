@@ -7,10 +7,10 @@
     <meta name="theme-color" content="#153d32" />
     <title>관리자 · KU CSE Quarterly</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/admin.css?v=20260904-existing-data" />
-    <script src="./config/site.config.js?v=20260902-349124"></script>
-    <script src="./config/firebase.config.js?v=20260902-349124"></script>
-    <script type="module" src="./assets/admin.js?v=20260904-existing-data"></script>
+    <link rel="stylesheet" href="./assets/admin.css?v=20260904-bank-transfer" />
+    <script src="./config/site.config.js?v=20260904-bank-transfer"></script>
+    <script src="./config/firebase.config.js?v=20260904-bank-transfer"></script>
+    <script type="module" src="./assets/admin.js?v=20260904-bank-transfer"></script>
   </head>
   <body>
     <a class="skip-link" href="#admin-main">본문으로 건너뛰기</a>
@@ -30,7 +30,7 @@
       <section class="login-panel" id="login-panel" aria-labelledby="login-title">
         <p class="section-label">ADMINISTRATION</p>
         <h1 id="login-title">관리자 로그인</h1>
-        <p class="login-copy">행사 일정, 신청·결제 링크와 지난 모임 기록을 관리하는 곳입니다.</p>
+        <p class="login-copy">행사 일정, 자체 계좌이체 신청·입금 상태와 지난 모임 기록을 관리하는 곳입니다.</p>
 
         <form id="login-form" class="login-form">
           <label>
@@ -46,7 +46,7 @@
         </form>
 
         <p class="security-note">
-          비밀번호는 이 저장소에 들어 있지 않습니다. Firebase가 로그인 여부만 확인하며, 이 화면은 신청자 개인정보를 다루지 않습니다.
+          비밀번호는 이 저장소에 들어 있지 않습니다. 신청자 연락처와 환불 계좌는 로그인한 관리자만 읽을 수 있으므로 공용 기기에서는 사용하지 마세요.
         </p>
       </section>
 
@@ -67,6 +67,7 @@
 
         <nav class="admin-tabs" aria-label="관리 항목">
           <button class="is-active" type="button" data-admin-tab="events" aria-selected="true">분기별 행사</button>
+          <button type="button" data-admin-tab="registrations" aria-selected="false">신청·입금</button>
           <button type="button" data-admin-tab="history" aria-selected="false">지난 기록</button>
         </nav>
 
@@ -115,30 +116,48 @@
               <label><span>날짜</span><input name="dateLabel" required /></label>
               <label><span>시간</span><input name="time" required /></label>
               <label><span>공개 장소 범위</span><input name="venue" required placeholder="예: 건대입구 인근" /><small>누구나 볼 수 있으므로 정확한 주소는 적지 마세요.</small></label>
-              <label><span>확정자 장소 안내</span><input name="locationNotice" placeholder="정확한 장소는 확정자에게 이메일로 안내합니다." /><small>실제 주소는 온오프믹스의 확정자 공지로 보내세요.</small></label>
+              <label><span>확정자 장소 안내</span><input name="locationNotice" placeholder="정확한 장소는 확정자에게 별도로 안내합니다." /><small>실제 주소는 공개 설정에 넣지 말고 입금 확정자에게만 보내세요.</small></label>
               <label><span>참가비</span><input name="priceLabel" required /></label>
               <label><span>정원</span><input name="capacity" type="number" min="1" max="999" required /></label>
             </div>
 
             <div class="registration-settings">
               <div>
-                <p class="section-label">APPLICATION LINK</p>
+                <p class="section-label">APPLICATION ROUTE</p>
                 <h3>신청·결제 연결</h3>
-                <p>공개 행사 URL을 붙이고 상태를 ‘신청 가능’으로 저장하면 모든 신청 버튼이 이 주소로 연결됩니다.</p>
+                <p>회차마다 외부 플랫폼 또는 자체 계좌이체 신청을 고릅니다. 자체 방식은 계좌 정보가 모두 있을 때만 신청이 열립니다.</p>
               </div>
-              <div class="form-grid form-grid--two">
-                <label>
-                  <span>신청 플랫폼</span>
-                  <select name="registrationProvider">
-                    <option value="onoffmix">온오프믹스</option>
-                    <option value="eventus">이벤터스</option>
-                    <option value="other">기타 외부 페이지</option>
-                  </select>
-                </label>
-                <label><span>공개 신청 URL</span><input name="registrationUrl" type="url" inputmode="url" placeholder="https://www.onoffmix.com/event/…" /></label>
+              <label>
+                <span>신청 방식</span>
+                <select name="registrationMode">
+                  <option value="manual_transfer">자체 사이트 · 계좌이체</option>
+                  <option value="external">외부 신청·결제 페이지</option>
+                </select>
+              </label>
+              <div data-registration-mode-fields="external">
+                <div class="form-grid form-grid--two">
+                  <label>
+                    <span>신청 플랫폼</span>
+                    <select name="registrationProvider">
+                      <option value="onoffmix">온오프믹스</option>
+                      <option value="eventus">이벤터스</option>
+                      <option value="other">기타 외부 페이지</option>
+                    </select>
+                  </label>
+                  <label><span>공개 신청 URL</span><input name="registrationUrl" type="url" inputmode="url" placeholder="https://www.onoffmix.com/event/…" /></label>
+                </div>
+              </div>
+              <div data-registration-mode-fields="manual_transfer" hidden>
+                <div class="form-grid form-grid--two">
+                  <label><span>은행</span><input name="bankName" maxlength="30" placeholder="예: 국민은행" /></label>
+                  <label><span>예금주</span><input name="bankAccountHolder" maxlength="40" /></label>
+                  <label><span>계좌번호</span><input name="bankAccountNumber" maxlength="30" inputmode="numeric" autocomplete="off" /></label>
+                  <label><span>입금액</span><input name="paymentAmount" type="number" min="1" max="1000000" step="1" /></label>
+                  <label><span>환불 요청 마감</span><input name="refundDeadlineLabel" maxlength="80" placeholder="예: 2026년 9월 7일 23:59" /></label>
+                </div>
               </div>
               <div class="privacy-warning">
-                이 저장 자료는 공개 페이지에서 읽습니다. 정확한 장소, 참가자 연락처, 계좌번호는 넣지 마세요.
+                은행·예금주·입금 계좌는 신청자에게 보여주기 위해 공개됩니다. 참가자 연락처와 환불 계좌는 이 행사 설정에 적지 마세요.
               </div>
             </div>
 
@@ -160,6 +179,62 @@
               <button class="admin-button admin-button--primary" type="submit">분기별 행사 저장</button>
             </div>
           </form>
+        </section>
+
+        <section class="admin-section" id="registrations-panel" data-admin-panel="registrations" hidden>
+          <div class="record-toolbar">
+            <label>
+              <span>신청 회차</span>
+              <select id="registration-event-select"></select>
+              <small class="load-summary">신청자 자료는 관리자에게만 표시됩니다.</small>
+            </label>
+            <div>
+              <button class="admin-button" id="refresh-registrations" type="button">새로고침</button>
+            </div>
+          </div>
+
+          <div class="registration-stats" aria-label="신청 상태 요약">
+            <div><span>전체</span><strong id="stat-total">0</strong></div>
+            <div><span>입금확인 대기</span><strong id="stat-pending">0</strong></div>
+            <div><span>참여 확정</span><strong id="stat-confirmed">0</strong></div>
+            <div><span>환불 요청</span><strong id="stat-refunds">0</strong></div>
+          </div>
+
+          <section class="reconciliation-box" aria-labelledby="reconciliation-title">
+            <div>
+              <p class="section-label">BULK RECONCILIATION</p>
+              <h2 id="reconciliation-title">입금 내역 한 번에 맞추기</h2>
+              <p>은행 내역에서 <code>입금자명[TAB]금액</code> 두 열을 복사해 붙여 넣으세요. 이름과 금액이 한 사람에게만 정확히 맞는 건만 자동 선택합니다.</p>
+            </div>
+            <textarea id="bank-transactions" rows="7" placeholder="홍길동&#9;10000&#10;김건국&#9;10,000"></textarea>
+            <div class="reconciliation-actions">
+              <button class="admin-button" id="match-transactions" type="button">입금 내역 대조</button>
+              <button class="admin-button admin-button--primary" id="confirm-selected" type="button">선택 건 입금확정</button>
+            </div>
+            <p class="match-status" id="match-status" role="status" aria-live="polite">붙여 넣은 내역은 브라우저에서만 비교하며 저장하지 않습니다.</p>
+          </section>
+
+          <div class="registration-table-wrap">
+            <table class="registration-table">
+              <thead>
+                <tr>
+                  <th scope="col">선택</th>
+                  <th scope="col">신청</th>
+                  <th scope="col">신청자</th>
+                  <th scope="col">입금자명</th>
+                  <th scope="col">금액</th>
+                  <th scope="col">상태</th>
+                  <th scope="col">환불</th>
+                </tr>
+              </thead>
+              <tbody id="registration-rows"></tbody>
+            </table>
+          </div>
+          <p class="empty-state" id="registration-empty" hidden>이 회차에 접수된 자체 신청이 없습니다.</p>
+
+          <div class="privacy-warning registration-privacy-note">
+            이 명단과 환불 계좌를 내려받거나 다른 문서에 복사하지 마세요. 환불 완료 처리 시 계좌번호는 자동으로 지워집니다.
+          </div>
         </section>
 
         <section class="admin-section" id="history-panel" data-admin-panel="history" hidden>
@@ -199,12 +274,11 @@
         <aside class="provider-workflow" aria-labelledby="provider-workflow-title">
           <div>
             <p class="section-label">REGISTRATION DESK</p>
-            <h2 id="provider-workflow-title">신청자·결제·공지 운영</h2>
-            <p>온오프믹스에서 유료 행사를 만든 뒤 공개 링크만 위 회차에 붙이면 됩니다. 결제 확인과 참가자 명단은 온오프믹스에서, 행사 소개는 이 페이지에서 관리합니다.</p>
+            <h2 id="provider-workflow-title">신청자·입금·환불 운영</h2>
+            <p>신청자는 입금 완료를 신고하고, 운영자는 은행 내역 두 열을 붙여 넣어 여러 건을 한 번에 확정합니다. 실제 송금이나 환불은 은행에서 처리한 뒤 이 화면에 결과를 기록합니다.</p>
           </div>
           <div class="provider-workflow__actions">
-            <a class="admin-button admin-button--primary" href="https://www.onoffmix.com/event/add" target="_blank" rel="noopener">온오프믹스 행사 만들기 ↗</a>
-            <a class="admin-button" href="https://www.onoffmix.com/account/opened/event" target="_blank" rel="noopener">신청자·공지 관리 ↗</a>
+            <button class="admin-button admin-button--primary" id="open-registration-desk" type="button">신청·입금 관리 열기</button>
           </div>
         </aside>
       </section>

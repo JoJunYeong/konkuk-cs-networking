@@ -37,6 +37,8 @@
   const state = {
     event: null,
     submitting: false,
+    refundSubmitting: false,
+    lastRegistrationId: "",
     managedHistory: null,
   };
 
@@ -55,6 +57,13 @@
     formStatus: $("#form-status"),
     fields: $("#dynamic-fields"),
     submit: $("#submit-button"),
+    bankTransferCard: $("#bank-transfer-card"),
+    paymentSentControl: $("#payment-sent-control"),
+    paymentSent: $('input[name="paymentSent"]'),
+    copyBankAccount: $("#copy-bank-account"),
+    refundRequest: $("#refund-request"),
+    refundForm: $("#refund-form"),
+    refundStatus: $("#refund-status"),
     primaryCta: $("#primary-cta"),
     headerCta: $("#header-cta"),
     mobileCta: $("#mobile-cta"),
@@ -68,6 +77,7 @@
     archiveCount: $("#archive-count"),
     archiveAttendance: $("#archive-attendance"),
     archiveSourceNote: $("#archive-source-note"),
+    copyRegistrationId: $("#copy-registration-id"),
   };
 
   const providerNames = {
@@ -98,6 +108,34 @@
         providerNames.other,
       url: safeExternalUrl(event?.registrationUrl || config.registration.providerUrl),
     };
+  }
+
+  function registrationMode(event = state.event) {
+    const mode = event?.registrationMode || config.registration.mode || "preview";
+    return ["preview", "external", "manual_transfer", "api"].includes(mode)
+      ? mode
+      : "preview";
+  }
+
+  function bankTransferDetails(event = state.event) {
+    const amount = Number(event?.paymentAmount);
+    return {
+      bankName: String(event?.bankName || "").trim(),
+      accountHolder: String(event?.bankAccountHolder || "").trim(),
+      accountNumber: String(event?.bankAccountNumber || "").trim(),
+      amount: Number.isInteger(amount) && amount > 0 ? amount : 0,
+      refundDeadlineLabel: String(event?.refundDeadlineLabel || "").trim(),
+    };
+  }
+
+  function bankTransferReady(event = state.event) {
+    const details = bankTransferDetails(event);
+    return Boolean(
+      details.bankName &&
+      details.accountHolder &&
+      details.accountNumber &&
+      details.amount > 0,
+    );
   }
 
   const markPlacements = [
@@ -145,6 +183,168 @@
     }
   }
 
+  let firestoreClientPromise;
+
+  async function firestoreClient() {
+    const runtime = window.KU_ADMIN_FIREBASE;
+    if (!runtime?.firebase?.projectId) throw new Error("firebase_configuration_missing");
+
+    if (!firestoreClientPromise) {
+      firestoreClientPromise = Promise.all([
+        import("https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js"),
+        import("https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js"),
+      ]).then(([appModule, firestoreModule]) => {
+        const app = appModule.getApps().length
+          ? appModule.getApp()
+          : appModule.initializeApp(runtime.firebase);
+        const db = firestoreModule.getFirestore(app);
+        const emulator = new URLSearchParams(window.location.search).get("firestoreEmulator");
+        if (["localhost", "127.0.0.1"].includes(window.location.hostname) && emulator) {
+          const match = /^(localhost|127\.0\.0\.1):(\d{2,5})$/.exec(emulator);
+          if (match) firestoreModule.connectFirestoreEmulator(db, match[1], Number(match[2]));
+        }
+        return {
+          db,
+          doc: firestoreModule.doc,
+          serverTimestamp: firestoreModule.serverTimestamp,
+          setDoc: firestoreModule.setDoc,
+        };
+      });
+    }
+
+    return firestoreClientPromise;
+  }
+
+  function secureRegistrationId() {
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    return [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
+  }
+
+  function phoneDigits(value) {
+    const digits = String(value || "").replace(/\D/g, "");
+    return digits.startsWith("82") ? `0${digits.slice(2)}` : digits;
+  }
+
+  function formatWon(value) {
+    const amount = Number(value);
+    return Number.isFinite(amount) ? `${amount.toLocaleString("ko-KR")}원` : "—";
+  }
+
+  function registrationStorageKey(eventId) {
+    return `ku-cse-registration:${eventId}`;
+  }
+
+  function rememberRegistration(eventId, registrationId) {
+    try {
+      window.localStorage.setItem(
+        registrationStorageKey(eventId),
+        JSON.stringify({ registrationId, submittedAt: Date.now() }),
+      );
+    } catch (_error) {
+      // 신청번호는 결과 화면에도 표시하므로 저장소 사용 불가가 신청을 막지는 않습니다.
+    }
+  }
+
+  function rememberedRegistration(eventId) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(registrationStorageKey(eventId)) || "null");
+      return stored && /^[a-f0-9]{32}$/.test(stored.registrationId) ? stored : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function submittedRecently(eventId) {
+    const stored = rememberedRegistration(eventId);
+    return Boolean(stored && Date.now() - Number(stored.submittedAt || 0) < 60_000);
+  }
+
+  async function createManualTransferRegistration(payload) {
+    const details = bankTransferDetails();
+    const digits = phoneDigits(payload.fields.phone);
+    if (!/^01\d{8,9}$/.test(digits)) throw new Error("phone_invalid");
+
+    const client = await firestoreClient();
+    const registrationId = secureRegistrationId();
+    const record = {
+      eventId: state.event.id,
+      eventQuarter: String(state.event.quarter || state.event.id).slice(0, 40),
+      status: "payment_reported",
+      name: payload.fields.name.slice(0, 40),
+      phone: payload.fields.phone.slice(0, 24),
+      phoneDigits: digits,
+      depositorName: payload.fields.depositorName.slice(0, 40),
+      amount: details.amount,
+      paymentReported: true,
+      privacyConsent: true,
+      consentVersion: "2026-09-04-v1",
+      createdAt: client.serverTimestamp(),
+      clientTimezone: String(payload.client.timezone || "").slice(0, 80),
+      source: "public_web",
+    };
+
+    await client.setDoc(client.doc(client.db, "registrations", registrationId), record);
+    rememberRegistration(state.event.id, registrationId);
+    return registrationId;
+  }
+
+  async function submitRefundRequest(event) {
+    event.preventDefault();
+    elements.refundStatus.textContent = "";
+    elements.refundStatus.classList.remove("is-error");
+    if (state.refundSubmitting || registrationMode() !== "manual_transfer") return;
+
+    if (!elements.refundForm.reportValidity()) return;
+    const data = new FormData(elements.refundForm);
+    const registrationId = String(data.get("registrationId") || "").trim().toLowerCase();
+    const digits = phoneDigits(data.get("phone"));
+    const refundAccount = phoneDigits(data.get("refundAccount"));
+    const refundBank = String(data.get("refundBank") || "").trim();
+    const refundAccountHolder = String(data.get("refundAccountHolder") || "").trim();
+
+    if (!/^[a-f0-9]{32}$/.test(registrationId)) {
+      elements.refundStatus.textContent = "신청번호 32자리를 확인해 주세요.";
+      elements.refundStatus.classList.add("is-error");
+      return;
+    }
+    if (!/^01\d{8,9}$/.test(digits) || !/^\d{8,20}$/.test(refundAccount)) {
+      elements.refundStatus.textContent = "휴대전화와 환불 계좌번호 형식을 확인해 주세요.";
+      elements.refundStatus.classList.add("is-error");
+      return;
+    }
+
+    state.refundSubmitting = true;
+    const submitButton = $('button[type="submit"]', elements.refundForm);
+    submitButton.disabled = true;
+    submitButton.textContent = "요청을 보내는 중…";
+
+    try {
+      const client = await firestoreClient();
+      await client.setDoc(client.doc(client.db, "refundRequests", registrationId), {
+        registrationId,
+        eventId: state.event.id,
+        status: "refund_requested",
+        phoneDigits: digits,
+        refundBank: refundBank.slice(0, 30),
+        refundAccount,
+        refundAccountHolder: refundAccountHolder.slice(0, 40),
+        refundConsent: true,
+        createdAt: client.serverTimestamp(),
+        source: "public_web",
+      });
+      elements.refundForm.reset();
+      elements.refundStatus.textContent = "취소·환불 요청을 접수했습니다. 운영자가 입금과 환불 기준을 확인한 뒤 처리합니다.";
+    } catch (_error) {
+      elements.refundStatus.textContent = "요청을 접수하지 못했습니다. 신청번호·휴대전화·선택한 회차를 확인해 주세요.";
+      elements.refundStatus.classList.add("is-error");
+    } finally {
+      state.refundSubmitting = false;
+      submitButton.disabled = false;
+      submitButton.textContent = "취소·환불 요청 보내기";
+    }
+  }
+
   function applyTheme(theme) {
     const root = document.documentElement;
     const mapping = {
@@ -186,7 +386,7 @@
     $("#open-customizer").hidden = !config.previewMode;
   }
 
-  function updateBanner(isOpen, hasRegistrationLink) {
+  function updateBanner(isOpen, routeReady) {
     if (config.previewMode) {
       elements.previewBanner.hidden = false;
       setText("#banner-title", "시험 운영 중");
@@ -194,11 +394,17 @@
       return;
     }
 
-    const waitingForLink = config.registration.mode === "external" && isOpen && !hasRegistrationLink;
-    elements.previewBanner.hidden = !waitingForLink;
-    if (waitingForLink) {
+    const mode = registrationMode();
+    const waitingForRoute = isOpen && !routeReady && ["external", "manual_transfer"].includes(mode);
+    elements.previewBanner.hidden = !waitingForRoute;
+    if (waitingForRoute) {
       setText("#banner-title", "신청 준비 중");
-      setText("#banner-copy", "신청·결제 링크를 연결하고 있습니다. 현재 이 페이지에서는 개인정보를 받지 않습니다.");
+      setText(
+        "#banner-copy",
+        mode === "manual_transfer"
+          ? "입금 계좌를 연결하고 있습니다. 계좌 정보가 완성되기 전에는 신청서를 받지 않습니다."
+          : "신청·결제 링크를 연결하고 있습니다. 현재 이 페이지에서는 개인정보를 받지 않습니다.",
+      );
     }
   }
 
@@ -424,7 +630,11 @@
     const list = $("#faq-list");
     list.replaceChildren();
 
-    const faq = state.event.faq || config.defaultFaq;
+    const faq = state.event.faq || (
+      registrationMode() === "manual_transfer"
+        ? config.manualTransferFaq || config.defaultFaq
+        : config.defaultFaq
+    );
     faq.forEach((item) => {
       const details = document.createElement("details");
       const summary = document.createElement("summary");
@@ -457,11 +667,18 @@
       const strong = document.createElement("strong");
       strong.textContent = event.quarter;
       const status = document.createElement("span");
+      const mode = registrationMode(event);
       const waitingForExternalLink =
-        config.registration.mode === "external" &&
+        mode === "external" &&
         event.status === "open" &&
         !registrationDetails(event).url;
-      status.textContent = waitingForExternalLink ? "링크 준비 중" : event.statusLabel;
+      const waitingForBankAccount =
+        mode === "manual_transfer" && event.status === "open" && !bankTransferReady(event);
+      status.textContent = waitingForExternalLink
+        ? "링크 준비 중"
+        : waitingForBankAccount
+          ? "계좌 준비 중"
+          : event.statusLabel;
       label.append(strong, status);
 
       const arrow = document.createElement("span");
@@ -506,15 +723,24 @@
     const event = state.event;
     const displayDate = [event.dateLabel, event.time].filter(Boolean).join(" · ");
     const registration = registrationDetails(event);
-    const usesExternalRegistration = config.registration.mode === "external";
+    const mode = registrationMode(event);
+    const usesExternalRegistration = mode === "external";
+    const usesManualTransfer = mode === "manual_transfer";
     const isOpen = event.status === "open";
     const hasRegistrationLink = Boolean(registration.url);
-    const canRegister = isOpen && (!usesExternalRegistration || hasRegistrationLink);
+    const hasBankAccount = bankTransferReady(event);
+    const routeReady = usesExternalRegistration
+      ? hasRegistrationLink
+      : usesManualTransfer
+        ? hasBankAccount
+        : true;
+    const canRegister = isOpen && routeReady;
+    const waitingStatus = usesManualTransfer ? "입금 계좌 준비 중" : "신청 링크 준비 중";
 
     setText("#event-eyebrow", event.eyebrow);
     setText(
       "#event-status",
-      isOpen && usesExternalRegistration && !hasRegistrationLink ? "신청 링크 준비 중" : event.statusLabel,
+      isOpen && !routeReady ? waitingStatus : event.statusLabel,
     );
     $("#event-status").dataset.status = canRegister ? "open" : event.status === "closed" ? "closed" : "upcoming";
     setText("#hero-title-line-one", event.titleLineOne);
@@ -531,7 +757,12 @@
     setText("#about-intro", event.aboutIntro || event.description);
     setText("#program-description", event.programDescription || "회차별 프로그램을 확인해 주세요.");
     setText("#event-quote", event.quote || "분기마다 새로운 연결이 시작됩니다.");
-    setText("#apply-copy", event.applicationCopy || event.description);
+    setText(
+      "#apply-copy",
+      usesManualTransfer
+        ? "안내 계좌로 참가비를 보낸 뒤 이름, 휴대전화와 실제 입금자명을 제출해 주세요. 입금 내역 확인 후 참여가 확정됩니다."
+        : event.applicationCopy || event.description,
+    );
     setText("#summary-event", `${event.quarter} 네트워킹 데이`);
     setText("#summary-date", displayDate);
     setText("#summary-venue", event.venue);
@@ -544,11 +775,13 @@
     const unavailableLabel = event.status === "closed"
       ? "신청 마감"
       : isOpen
-        ? "신청 링크 준비 중"
+        ? waitingStatus
         : "오픈 예정";
-    const readyLabel = event.applicationLabel === "참가 신청하기"
-      ? "신청·결제하기"
-      : event.applicationLabel || "신청·결제하기";
+    const readyLabel = usesManualTransfer
+      ? "입금 후 신청하기"
+      : event.applicationLabel === "참가 신청하기"
+        ? "신청·결제하기"
+        : event.applicationLabel || "신청·결제하기";
     const destination = usesExternalRegistration ? registration.url : "#apply";
     configureCta(elements.primaryCta, {
       enabled: canRegister,
@@ -559,13 +792,13 @@
     configureCta(elements.mobileCta, {
       enabled: canRegister,
       href: destination,
-      label: canRegister ? "신청·결제하기 ↗" : unavailableLabel,
+      label: canRegister ? (usesManualTransfer ? "입금 후 신청하기" : "신청·결제하기 ↗") : unavailableLabel,
       external: usesExternalRegistration,
     });
     configureCta(elements.headerCta, {
       enabled: canRegister,
       href: destination,
-      label: canRegister ? "신청·결제 ↗" : unavailableLabel,
+      label: canRegister ? (usesManualTransfer ? "참가 신청" : "신청·결제 ↗") : unavailableLabel,
       external: usesExternalRegistration,
     });
 
@@ -594,29 +827,79 @@
       });
     }
 
-    setFormAvailability(isOpen);
-    updateBanner(isOpen, hasRegistrationLink);
+    const providerOwnsForm = usesExternalRegistration && config.registration.providerHandlesForm;
+    elements.form.hidden = providerOwnsForm;
+    elements.managedRegistration.hidden = !providerOwnsForm;
+    elements.bankTransferCard.hidden = !usesManualTransfer;
+    elements.paymentSentControl.hidden = !usesManualTransfer;
+    elements.paymentSent.required = usesManualTransfer;
+    elements.refundRequest.hidden = !usesManualTransfer || event.status === "upcoming";
+
+    if (usesManualTransfer) {
+      const bank = bankTransferDetails(event);
+      setText("#bank-name", bank.bankName || "연결 준비 중");
+      setText("#bank-account-number", bank.accountNumber || "연결 준비 중");
+      setText("#bank-account-holder", bank.accountHolder || "연결 준비 중");
+      setText("#bank-transfer-amount", bank.amount > 0 ? formatWon(bank.amount) : "금액 준비 중");
+      setText(
+        "#refund-deadline-copy",
+        bank.refundDeadlineLabel
+          ? `환불 요청 마감: ${bank.refundDeadlineLabel}. 이후에는 환불이 제한될 수 있습니다.`
+          : "환불 마감과 처리 기준을 확인해 주세요.",
+      );
+      elements.copyBankAccount.disabled = !bank.accountNumber;
+      setText("#flow-payment-copy", "입금자명·금액을 일괄 대조");
+      setText("#flow-notice-copy", "확정자에게 운영자가 별도 공지");
+    } else {
+      setText("#flow-payment-copy", "외부 결제 상태로 확인");
+      setText("#flow-notice-copy", "확정자에게 별도 공지");
+    }
+
+    setText(
+      "#form-footnote",
+      mode === "preview"
+        ? "현재 미리보기 모드입니다. 입력 내용은 저장되거나 전송되지 않습니다."
+        : usesExternalRegistration
+          ? "신청과 결제는 연결된 외부 제공자의 페이지에서 완료됩니다."
+          : usesManualTransfer
+            ? "제출 직후 상태는 ‘입금확인 대기’입니다. 실제 계좌 내역 확인 전에는 참여가 확정되지 않습니다."
+            : "결제 승인 전에는 참여가 확정되지 않습니다.",
+    );
+
+    const remembered = usesManualTransfer ? rememberedRegistration(event.id) : null;
+    if (remembered && !elements.refundForm.elements.registrationId.value) {
+      elements.refundForm.elements.registrationId.value = remembered.registrationId;
+    }
+
+    setFormAvailability(canRegister);
+    updateBanner(isOpen, routeReady);
     renderTimeline();
     renderFaq();
     renderQuarterTabs();
   }
 
-  function setFormAvailability(isOpen) {
+  function setFormAvailability(canRegister) {
     const controls = $$("input, select, textarea", elements.form);
     controls.forEach((control) => {
-      control.disabled = !isOpen;
+      control.disabled = !canRegister;
     });
-    elements.submit.disabled = !isOpen;
-    elements.submit.textContent = isOpen
+    elements.submit.disabled = !canRegister;
+    elements.submit.textContent = canRegister
       ? submitLabelForMode()
       : state.event.status === "closed"
         ? "신청이 마감되었습니다"
-        : "신청 오픈 전입니다";
+        : state.event.status === "open"
+          ? registrationMode() === "manual_transfer"
+            ? "입금 계좌 준비 중입니다"
+            : "신청 연결 준비 중입니다"
+          : "신청 오픈 전입니다";
   }
 
   function submitLabelForMode() {
-    if (config.registration.mode === "external") return "외부 결제 페이지로 이동";
-    if (config.registration.mode === "api") return "신청 후 결제하기";
+    const mode = registrationMode();
+    if (mode === "external") return "외부 결제 페이지로 이동";
+    if (mode === "manual_transfer") return "입금 확인 요청하기";
+    if (mode === "api") return "신청 후 결제하기";
     return "신청 내용 확인하기";
   }
 
@@ -627,6 +910,9 @@
     state.event = selected;
     hideStatus();
     elements.form.reset();
+    elements.refundForm.reset();
+    elements.refundStatus.textContent = "";
+    elements.refundStatus.classList.remove("is-error");
     clearFieldErrors();
     updateEventContent();
 
@@ -749,8 +1035,16 @@
       showStatus("개인정보 수집·이용 필수 동의를 확인해 주세요.");
     }
 
+    if (registrationMode() === "manual_transfer" && !elements.paymentSent.checked) {
+      valid = false;
+      showStatus("참가비를 송금한 뒤 입금 완료 항목을 확인해 주세요.");
+    }
+
     if (!valid) {
-      const firstInvalid = $('[aria-invalid="true"]', elements.form) || privacy;
+      const firstInvalid = $('[aria-invalid="true"]', elements.form)
+        || (registrationMode() === "manual_transfer" && !elements.paymentSent.checked
+          ? elements.paymentSent
+          : privacy);
       firstInvalid.focus();
     }
 
@@ -769,7 +1063,7 @@
       fields,
       consents: {
         privacy: data.get("privacyConsent") === "on",
-        networkingProfile: data.get("networkingConsent") === "on",
+        paymentReported: data.get("paymentSent") === "on",
       },
       client: {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -782,7 +1076,7 @@
     hideStatus();
 
     if (state.event.status !== "open" || state.submitting) return;
-    const mode = config.registration.mode;
+    const mode = registrationMode();
 
     if (mode === "external" && config.registration.providerHandlesForm) {
       const registrationUrl = registrationDetails().url;
@@ -797,6 +1091,11 @@
     if (!validateForm()) return;
     const payload = formPayload();
 
+    if (valueFromForm(elements.form, "company")) {
+      showStatus("신청을 처리하지 못했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.");
+      return;
+    }
+
     if (mode === "preview") {
       showPreviewResult(payload);
       return;
@@ -809,6 +1108,36 @@
         return;
       }
       window.location.assign(registrationUrl);
+      return;
+    }
+
+    if (mode === "manual_transfer") {
+      if (!bankTransferReady()) {
+        showStatus("입금 계좌 설정이 아직 완료되지 않아 신청을 받지 않습니다.");
+        return;
+      }
+
+      const remembered = rememberedRegistration(state.event.id);
+      if (submittedRecently(state.event.id) && remembered) {
+        showStatus(`이 브라우저에서 방금 접수한 신청이 있습니다. 신청번호 ${remembered.registrationId}를 확인해 주세요.`);
+        return;
+      }
+
+      state.submitting = true;
+      elements.submit.disabled = true;
+      elements.submit.textContent = "입금 확인 요청을 저장하는 중…";
+
+      try {
+        const registrationId = await createManualTransferRegistration(payload);
+        elements.form.reset();
+        showManualTransferResult(payload, registrationId);
+      } catch (_error) {
+        showStatus("신청을 저장하지 못했습니다. 입력 내용은 접수된 것으로 간주하지 말고 잠시 뒤 다시 시도해 주세요.");
+      } finally {
+        state.submitting = false;
+        elements.submit.disabled = false;
+        elements.submit.textContent = submitLabelForMode();
+      }
       return;
     }
 
@@ -840,16 +1169,13 @@
     }
   }
 
-  function showPreviewResult(payload) {
+  function valueFromForm(form, name) {
+    return String(form.elements[name]?.value || "").trim();
+  }
+
+  function renderResultRows(rows) {
     const summary = $("#result-summary");
     summary.replaceChildren();
-
-    const rows = [
-      ["회차", state.event.quarter],
-      ["신청자", payload.fields.name || "입력 확인"],
-      ["화면 상태", "폼 검증 완료"],
-      ["실제 처리", "저장·결제·메시지 없음"],
-    ];
 
     rows.forEach(([label, value]) => {
       const row = document.createElement("div");
@@ -860,6 +1186,43 @@
       row.append(key, data);
       summary.append(row);
     });
+  }
+
+  function showManualTransferResult(payload, registrationId) {
+    state.lastRegistrationId = registrationId;
+    setText("#result-eyebrow", "REGISTRATION RECEIVED");
+    setText("#result-title", "입금확인 요청을 접수했습니다.");
+    setText(
+      "#result-copy",
+      "아직 참여 확정 상태는 아닙니다. 운영자가 실제 입금자명과 금액을 확인한 뒤 확정하며, 아래 신청번호는 취소·환불 요청에 필요합니다.",
+    );
+    renderResultRows([
+      ["회차", state.event.quarter],
+      ["신청자", payload.fields.name || "—"],
+      ["입금자명", payload.fields.depositorName || "—"],
+      ["현재 상태", "입금확인 대기"],
+      ["신청번호", registrationId],
+    ]);
+    elements.copyRegistrationId.hidden = false;
+    elements.copyRegistrationId.textContent = "신청번호 복사";
+    if (!elements.refundForm.elements.registrationId.value) {
+      elements.refundForm.elements.registrationId.value = registrationId;
+    }
+    openDialog(elements.resultDialog);
+  }
+
+  function showPreviewResult(payload) {
+    state.lastRegistrationId = "";
+    setText("#result-eyebrow", "PREVIEW CHECK");
+    setText("#result-title", "입력한 내용을 확인했습니다.");
+    setText("#result-copy", "지금은 시험 운영 중이라 신청 내용은 저장되지 않았고, 결제와 메시지도 보내지 않았습니다.");
+    elements.copyRegistrationId.hidden = true;
+    renderResultRows([
+      ["회차", state.event.quarter],
+      ["신청자", payload.fields.name || "입력 확인"],
+      ["화면 상태", "폼 검증 완료"],
+      ["실제 처리", "저장·결제·메시지 없음"],
+    ]);
 
     openDialog(elements.resultDialog);
   }
@@ -894,6 +1257,20 @@
       }, 1800);
     } catch (error) {
       if (error?.name !== "AbortError") window.prompt("아래 링크를 복사해 주세요.", window.location.href);
+    }
+  }
+
+  async function copyText(button, text, successLabel) {
+    if (!text) return;
+    const original = button.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      button.textContent = successLabel;
+      window.setTimeout(() => {
+        button.textContent = original;
+      }, 1800);
+    } catch (_error) {
+      window.prompt("아래 내용을 복사해 주세요.", text);
     }
   }
 
@@ -1009,6 +1386,13 @@
 
   function initializeEvents() {
     elements.form.addEventListener("submit", handleSubmit);
+    elements.refundForm.addEventListener("submit", submitRefundRequest);
+    elements.copyBankAccount.addEventListener("click", () => {
+      copyText(elements.copyBankAccount, bankTransferDetails().accountNumber, "계좌번호를 복사했습니다");
+    });
+    elements.copyRegistrationId.addEventListener("click", () => {
+      copyText(elements.copyRegistrationId, state.lastRegistrationId, "신청번호를 복사했습니다");
+    });
     $("#share-button").addEventListener("click", (event) => sharePage(event.currentTarget));
     $("#footer-share").addEventListener("click", (event) => sharePage(event.currentTarget));
     $("#open-customizer").addEventListener("click", openCustomizer);
@@ -1040,23 +1424,6 @@
     initializeDialogs();
     initializeEvents();
     selectEvent(initialEventId());
-
-    const mode = config.registration.mode;
-    if (mode === "external" && config.registration.providerHandlesForm) {
-      elements.form.hidden = true;
-      elements.managedRegistration.hidden = false;
-    } else {
-      elements.form.hidden = false;
-      elements.managedRegistration.hidden = true;
-    }
-    setText(
-      "#form-footnote",
-      mode === "preview"
-        ? "현재 미리보기 모드입니다. 입력 내용은 저장되거나 전송되지 않습니다."
-        : mode === "external"
-          ? "신청과 결제는 연결된 외부 제공자의 안전한 페이지에서 완료됩니다."
-          : "결제 승인 전에는 참여가 확정되지 않습니다.",
-    );
   }
 
   initialize().catch(() => {

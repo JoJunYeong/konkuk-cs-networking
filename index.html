@@ -35,10 +35,10 @@
     <link rel="canonical" href="https://jojunyeong.github.io/konkuk-cs-networking/" />
     <title>KU CSE Quarterly Network</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260902-349124" />
-    <script src="./config/site.config.js?v=20260902-349124"></script>
-    <script src="./config/firebase.config.js?v=20260902-349124"></script>
-    <script defer src="./assets/app.js?v=20260902-349124"></script>
+    <link rel="stylesheet" href="./assets/styles.css?v=20260904-bank-transfer" />
+    <script src="./config/site.config.js?v=20260904-bank-transfer"></script>
+    <script src="./config/firebase.config.js?v=20260904-bank-transfer"></script>
+    <script defer src="./assets/app.js?v=20260904-bank-transfer"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
@@ -157,8 +157,8 @@
           </div>
           <ol class="registration-path__steps">
             <li><span>01</span><strong>참가 신청</strong><small>필요한 정보만 입력</small></li>
-            <li><span>02</span><strong>결제·참여 확정</strong><small>입금 대조 없이 자동 확인</small></li>
-            <li><span>03</span><strong>장소·입장 안내</strong><small>확정자에게 이메일·문자 공지</small></li>
+            <li><span>02</span><strong>결제·참여 확정</strong><small id="flow-payment-copy">외부 결제 상태로 확인</small></li>
+            <li><span>03</span><strong>장소·입장 안내</strong><small id="flow-notice-copy">확정자에게 별도 공지</small></li>
           </ol>
         </div>
       </section>
@@ -317,6 +317,29 @@
             </div>
             <div class="form-card__status" id="form-status" role="status" aria-live="polite"></div>
             <form id="registration-form" novalidate>
+              <section class="bank-transfer-card" id="bank-transfer-card" aria-labelledby="bank-transfer-title" hidden>
+                <div class="bank-transfer-card__heading">
+                  <div>
+                    <span class="form-step">STEP 00</span>
+                    <h3 id="bank-transfer-title">먼저 참가비를 보내주세요</h3>
+                  </div>
+                  <span class="provider-status">계좌이체</span>
+                </div>
+                <dl class="bank-transfer-details">
+                  <div><dt>은행</dt><dd id="bank-name">—</dd></div>
+                  <div><dt>계좌번호</dt><dd id="bank-account-number">—</dd></div>
+                  <div><dt>예금주</dt><dd id="bank-account-holder">—</dd></div>
+                  <div><dt>입금액</dt><dd id="bank-transfer-amount">—</dd></div>
+                </dl>
+                <button class="button button--line button--full bank-copy-button" id="copy-bank-account" type="button">
+                  계좌번호 복사
+                </button>
+                <p>
+                  송금 뒤 실제 입금자명을 아래에 적어 주세요. 신청서를 보내도 즉시 확정되는 것은 아니며,
+                  운영자가 계좌 내역을 대조한 뒤 확정합니다.
+                </p>
+              </section>
+
               <div class="form-heading">
                 <div>
                   <span class="form-step">STEP 01</span>
@@ -326,21 +349,25 @@
               </div>
 
               <div class="form-grid" id="dynamic-fields"></div>
+              <label class="form-honeypot" aria-hidden="true">
+                <span>회사명</span>
+                <input name="company" type="text" tabindex="-1" autocomplete="off" />
+              </label>
 
               <fieldset class="consent-group">
                 <legend>약관 및 개인정보 동의</legend>
+                <label class="check-control" id="payment-sent-control" hidden>
+                  <input type="checkbox" name="paymentSent" />
+                  <span>
+                    <strong>[필수] 위 계좌로 참가비를 송금했습니다.</strong>
+                    <small>이 체크는 입금확인 요청이며, 실제 계좌 내역 확인 전에는 참여가 확정되지 않습니다.</small>
+                  </span>
+                </label>
                 <label class="check-control">
                   <input type="checkbox" name="privacyConsent" required />
                   <span>
                     <strong>[필수] 개인정보 수집·이용에 동의합니다.</strong>
                     <small id="privacy-summary">행사 신청 확인 및 안내 목적으로 수집하며 보유기간 종료 후 파기합니다.</small>
-                  </span>
-                </label>
-                <label class="check-control">
-                  <input type="checkbox" name="networkingConsent" />
-                  <span>
-                    <strong>[선택] 참가자 간 프로필 공유에 동의합니다.</strong>
-                    <small>동의한 항목만 행사 당일 네트워킹 카드에 표시합니다.</small>
                   </span>
                 </label>
               </fieldset>
@@ -352,6 +379,49 @@
                 현재 미리보기 모드입니다. 입력 내용은 저장되거나 전송되지 않습니다.
               </p>
             </form>
+
+            <details class="refund-request" id="refund-request" hidden>
+              <summary>신청 취소·환불 요청</summary>
+              <form id="refund-form" novalidate>
+                <p>
+                  신청할 때 받은 신청번호와 휴대전화를 확인합니다. 환불 계좌는 환불 처리에만 사용하고
+                  완료 처리할 때 계좌번호를 지웁니다.
+                </p>
+                <div class="form-grid">
+                  <label class="field field--full">
+                    <span class="field__label">신청번호 *</span>
+                    <input name="registrationId" required minlength="32" maxlength="32" pattern="[a-fA-F0-9]{32}" autocomplete="off" />
+                  </label>
+                  <label class="field field--full">
+                    <span class="field__label">신청한 휴대전화 *</span>
+                    <input name="phone" type="tel" required autocomplete="tel" placeholder="010-0000-0000" pattern="^(?:[0-9+ ]|\(|\)|-){9,20}$" />
+                  </label>
+                </div>
+                <div class="form-grid form-grid--refund">
+                  <label class="field field--full">
+                    <span class="field__label">환불 은행 *</span>
+                    <input name="refundBank" required maxlength="30" autocomplete="off" placeholder="예: 국민은행" />
+                  </label>
+                  <label class="field field--full">
+                    <span class="field__label">환불 계좌번호 *</span>
+                    <input name="refundAccount" required inputmode="numeric" autocomplete="off" placeholder="숫자만 입력" />
+                  </label>
+                  <label class="field field--full">
+                    <span class="field__label">예금주 *</span>
+                    <input name="refundAccountHolder" required maxlength="40" autocomplete="off" />
+                  </label>
+                </div>
+                <label class="check-control">
+                  <input name="refundConsent" type="checkbox" required />
+                  <span>
+                    <strong>[필수] 취소·환불 처리 목적의 계좌정보 수집에 동의합니다.</strong>
+                    <small id="refund-deadline-copy">환불 마감과 처리 기준을 확인해 주세요.</small>
+                  </span>
+                </label>
+                <button class="button button--ink button--full" type="submit">취소·환불 요청 보내기</button>
+                <p class="form-footnote" id="refund-status" role="status" aria-live="polite"></p>
+              </form>
+            </details>
           </div>
         </div>
       </section>
@@ -388,10 +458,11 @@
     <dialog class="modal" id="result-dialog" aria-labelledby="result-title">
       <button class="modal__close" type="button" data-close-dialog aria-label="닫기">×</button>
       <div class="modal__icon" aria-hidden="true">✓</div>
-      <p class="eyebrow eyebrow--dark">PREVIEW CHECK</p>
+      <p class="eyebrow eyebrow--dark" id="result-eyebrow">PREVIEW CHECK</p>
       <h2 id="result-title">입력한 내용을 확인했습니다.</h2>
       <p id="result-copy">지금은 시험 운영 중이라 신청 내용은 저장되지 않았고, 결제와 메시지도 보내지 않았습니다.</p>
       <div class="modal__summary" id="result-summary"></div>
+      <button class="button button--line button--full" id="copy-registration-id" type="button" hidden>신청번호 복사</button>
       <button class="button button--ink button--full" type="button" data-close-dialog>확인</button>
     </dialog>
 

@@ -7,10 +7,10 @@
     <meta name="theme-color" content="#153d32" />
     <title>관리자 · KU CSE Quarterly</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/admin.css?v=20260902-registration" />
+    <link rel="stylesheet" href="./assets/admin.css?v=20260904-existing-data" />
     <script src="./config/site.config.js?v=20260902-349124"></script>
     <script src="./config/firebase.config.js?v=20260902-349124"></script>
-    <script type="module" src="./assets/admin.js?v=20260902-349124"></script>
+    <script type="module" src="./assets/admin.js?v=20260904-existing-data"></script>
   </head>
   <body>
     <a class="skip-link" href="#admin-main">본문으로 건너뛰기</a>
@@ -65,18 +65,6 @@
 
         <div class="sync-status" id="sync-status" role="status" aria-live="polite">자료를 확인하는 중입니다.</div>
 
-        <aside class="provider-workflow" aria-labelledby="provider-workflow-title">
-          <div>
-            <p class="section-label">REGISTRATION DESK</p>
-            <h2 id="provider-workflow-title">신청자·결제·공지 운영</h2>
-            <p>온오프믹스에서 유료 행사를 만든 뒤 공개 링크만 아래 회차에 붙이면 됩니다. 결제 확인과 참가자 명단은 온오프믹스에서, 행사 소개는 이 페이지에서 관리합니다.</p>
-          </div>
-          <div class="provider-workflow__actions">
-            <a class="admin-button admin-button--primary" href="https://www.onoffmix.com/event/add" target="_blank" rel="noopener">온오프믹스 행사 만들기 ↗</a>
-            <a class="admin-button" href="https://www.onoffmix.com/account/opened/event" target="_blank" rel="noopener">신청자·공지 관리 ↗</a>
-          </div>
-        </aside>
-
         <nav class="admin-tabs" aria-label="관리 항목">
           <button class="is-active" type="button" data-admin-tab="events" aria-selected="true">분기별 행사</button>
           <button type="button" data-admin-tab="history" aria-selected="false">지난 기록</button>
@@ -87,6 +75,7 @@
             <label>
               <span>편집할 회차</span>
               <select id="event-select"></select>
+              <small class="load-summary" id="event-load-summary" aria-live="polite">저장된 회차를 불러오는 중입니다.</small>
             </label>
             <div>
               <button class="admin-button" id="add-event" type="button">새 분기 추가</button>
@@ -206,6 +195,18 @@
             </div>
           </form>
         </section>
+
+        <aside class="provider-workflow" aria-labelledby="provider-workflow-title">
+          <div>
+            <p class="section-label">REGISTRATION DESK</p>
+            <h2 id="provider-workflow-title">신청자·결제·공지 운영</h2>
+            <p>온오프믹스에서 유료 행사를 만든 뒤 공개 링크만 위 회차에 붙이면 됩니다. 결제 확인과 참가자 명단은 온오프믹스에서, 행사 소개는 이 페이지에서 관리합니다.</p>
+          </div>
+          <div class="provider-workflow__actions">
+            <a class="admin-button admin-button--primary" href="https://www.onoffmix.com/event/add" target="_blank" rel="noopener">온오프믹스 행사 만들기 ↗</a>
+            <a class="admin-button" href="https://www.onoffmix.com/account/opened/event" target="_blank" rel="noopener">신청자·공지 관리 ↗</a>
+          </div>
+        </aside>
       </section>
     </main>
   </body>

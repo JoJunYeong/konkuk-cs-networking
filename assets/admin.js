@@ -70,6 +70,7 @@ const elements = {
   syncStatus: $("#sync-status"),
   accountName: $("#account-name"),
   eventSelect: $("#event-select"),
+  eventLoadSummary: $("#event-load-summary"),
   eventForm: $("#event-form"),
   historySelect: $("#history-select"),
   historyForm: $("#history-form"),
@@ -133,12 +134,19 @@ async function loadDashboardData() {
   if (!managedEvents) await writePayload("events", state.events);
   if (!managedHistory) await writePayload("history", state.history);
 
-  state.selectedEventId = state.events.find((event) => event.featured)?.id || state.events[0]?.id || "";
+  state.selectedEventId = initialEventId(state.events);
   state.selectedHistoryId = state.history.events[0]?.id || "";
   state.ready = true;
   renderEventSelect();
   renderHistorySelect();
-  showSyncStatus("최신 자료를 불러왔습니다. 저장하면 공개 페이지에 바로 반영됩니다.");
+  const currentOrFutureCount = state.events.filter(isCurrentOrFutureEvent).length;
+  const selected = currentEvent();
+  if (!selected || value(elements.eventForm, "id") !== selected.id) {
+    throw new Error("event_form_load_failed");
+  }
+  showSyncStatus(
+    `${state.events.length}개 회차를 불러왔습니다. 현재·향후 ${currentOrFutureCount}개 중 ${selected.quarter} 자료를 편집기에 표시했습니다.`,
+  );
 }
 
 function value(form, name) {
@@ -156,6 +164,31 @@ function agendaToText(agenda) {
   return (Array.isArray(agenda) ? agenda : [])
     .map((item) => [item.time, item.title, item.description].join(" | "))
     .join("\n");
+}
+
+function quarterIndex(event) {
+  const match = /^(\d{4})-Q([1-4])$/.exec(String(event?.id || ""));
+  return match ? Number(match[1]) * 4 + Number(match[2]) - 1 : null;
+}
+
+function currentQuarterIndex() {
+  const now = new Date();
+  return now.getFullYear() * 4 + Math.floor(now.getMonth() / 3);
+}
+
+function isCurrentOrFutureEvent(event) {
+  const index = quarterIndex(event);
+  return index !== null && index >= currentQuarterIndex();
+}
+
+function initialEventId(events) {
+  const currentOrFuture = events.filter(isCurrentOrFutureEvent);
+  return currentOrFuture.find((event) => event.featured)?.id
+    || currentOrFuture.find((event) => event.status === "open")?.id
+    || currentOrFuture[0]?.id
+    || events.find((event) => event.featured)?.id
+    || events.at(-1)?.id
+    || "";
 }
 
 function textToAgenda(raw) {
@@ -189,7 +222,10 @@ function renderEventSelect() {
 
 function renderEventForm() {
   const event = currentEvent();
-  if (!event) return;
+  if (!event) {
+    elements.eventLoadSummary.textContent = "선택한 회차 자료를 찾지 못했습니다.";
+    return;
+  }
   [
     "id", "quarter", "sequence", "status", "statusLabel", "titleLineOne", "titleLineTwo",
     "description", "notice", "dateLabel", "time", "venue", "locationNotice", "priceLabel",
@@ -202,6 +238,7 @@ function renderEventForm() {
   );
   setValue(elements.eventForm, "featured", event.featured);
   setValue(elements.eventForm, "agenda", agendaToText(event.agenda));
+  elements.eventLoadSummary.textContent = `${event.quarter}에 저장된 자료를 아래 입력칸에 불러왔습니다.`;
 }
 
 function collectEventForm() {

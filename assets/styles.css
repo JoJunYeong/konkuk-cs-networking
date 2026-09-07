@@ -198,7 +198,6 @@ h1, h2, h3 { font-weight: 750; line-height: 1.35; letter-spacing: -.045em; text-
 .field__error:empty { display: none; }
 .field__error { color: #b6373a; }
 [aria-invalid="true"] { border-color: #bd5755 !important; }
-.form-honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .consent-group { margin: 25px 0; padding: 0; border: 0; }
 .consent-group legend { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
 .check-control { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }

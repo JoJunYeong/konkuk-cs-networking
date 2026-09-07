@@ -1282,11 +1282,6 @@
     }
     const payload = formPayload();
 
-    if (valueFromForm(elements.form, "company")) {
-      showStatus("신청을 처리하지 못했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.");
-      return;
-    }
-
     if (mode === "preview") {
       showPreviewResult(payload);
       return;

@@ -7,11 +7,11 @@
     <meta name="theme-color" content="#147d59" />
     <title>관리자 · KU meet</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/admin.css?v=20260907-admin" />
+    <link rel="stylesheet" href="./assets/admin.css?v=20260907-quarter-copy" />
     <script src="./config/site.config.js?v=20260907-admin"></script>
     <script src="./config/firebase.config.js?v=20260907-meet"></script>
     <script src="./assets/registration-time.js?v=20260907-admin"></script>
-    <script type="module" src="./assets/admin.js?v=20260907-admin"></script>
+    <script type="module" src="./assets/admin.js?v=20260907-quarter-copy"></script>
   </head>
   <body>
     <a class="skip-link" href="#admin-main">본문으로 건너뛰기</a>
@@ -65,6 +65,10 @@
         <section id="events-panel" data-admin-panel="events" role="tabpanel" aria-labelledby="tab-events">
           <form id="event-form" class="editor-form" novalidate>
             <input name="id" type="hidden" /><input name="sequence" type="hidden" /><input name="statusLabel" type="hidden" /><input name="applicationLabel" type="hidden" />
+            <div class="event-import" id="previous-event-import" hidden>
+              <div><strong>이전 분기 내용</strong><p class="field-note" id="previous-event-import-help">소개·시간·장소·정원·참가비·계좌·진행 순서를 가져옵니다.</p><p class="event-import__status" id="previous-event-import-status" role="status"></p></div>
+              <button class="admin-button" id="import-previous-event" type="button" aria-describedby="previous-event-import-help">이전 분기 불러오기</button>
+            </div>
             <div class="editor-layout">
               <div class="editor-main">
                 <section class="editor-card" aria-labelledby="reception-heading">

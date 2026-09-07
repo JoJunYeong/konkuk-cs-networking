@@ -349,6 +349,65 @@ function currentEvent() {
   return state.events.find((event) => event.id === state.selectedEventId) || null;
 }
 
+function previousSavedEvent() {
+  const selectedQuarter = quarterIndex(currentEvent());
+  if (selectedQuarter === null) return null;
+  return state.savedEvents
+    .filter((event) => quarterIndex(event) !== null && quarterIndex(event) < selectedQuarter)
+    .sort((a, b) => quarterIndex(b) - quarterIndex(a))[0] || null;
+}
+
+function renderPreviousEventImport() {
+  const source = previousSavedEvent();
+  $("#previous-event-import").hidden = !source;
+  $("#previous-event-import-status").textContent = "";
+  const button = $("#import-previous-event");
+  button.disabled = !source || !state.ready || elements.eventForm.dataset.busy === "true";
+  if (!source) return;
+  button.textContent = `${source.quarter} 내용 불러오기`;
+  button.setAttribute("aria-label", `${source.quarter} 내용을 ${currentEvent().quarter}에 불러오기`);
+}
+
+async function importPreviousEvent() {
+  if (!state.ready || elements.eventForm.dataset.busy === "true") return;
+  const target = currentEvent();
+  const previous = previousSavedEvent();
+  if (!target || !previous) return;
+  const source = clone(previous);
+  if (!await confirmAction({
+    title: `${source.quarter} 내용 불러오기`,
+    message: `${target.quarter}의 아래 항목을 ${source.quarter}에 저장된 내용으로 바꿉니다.\n\n행사 날짜, 접수 상태, 마감일, 신청 링크는 현재 값을 유지합니다. 불러온 뒤 저장해야 사이트에 반영됩니다.`,
+    items: ["소개 문구·공지", "행사 시간·장소·정원", "참가비·입금 계좌·신청 방식", "진행 순서"],
+    confirmLabel: "불러오기",
+  })) return;
+  if (currentEvent() !== target || !state.ready || elements.eventForm.dataset.busy === "true") return;
+
+  try {
+    collectEventForm();
+    // Only reusable settings are copied; the target quarter and its reception dates stay intact.
+    [
+      "titleLineOne", "titleLineTwo", "description", "notice", "time", "venue", "locationNotice",
+      "priceLabel", "capacity", "paymentAmount", "bankName", "bankAccountHolder", "bankAccountNumber",
+      "applicationCopy", "aboutIntro", "quote", "programDescription",
+    ].forEach((field) => {
+      if (source[field] !== undefined) target[field] = clone(source[field]);
+      else delete target[field];
+    });
+    target.registrationMode = eventRegistrationMode(source);
+    target.registrationProvider = source.registrationProvider || sourceConfig.registration?.provider || "onoffmix";
+    target.agenda = clone(source.agenda || []);
+    target.revision = Date.now();
+    renderEventSelect();
+    renderRegistrationEventSelect();
+    markEventDirty();
+    const message = `${source.quarter} 내용을 불러왔습니다. 날짜와 마감일을 확인한 뒤 저장해 주세요.`;
+    $("#previous-event-import-status").textContent = message;
+    showSyncStatus(message);
+  } catch (error) {
+    showSyncStatus(error?.message || "이전 분기 내용을 불러오지 못했습니다.", true);
+  }
+}
+
 function collectAgendaRows() {
   return $$(".agenda-row", $("#agenda-editor")).map((row) => ({
     time: $("[data-agenda-field=time]", row).value.trim(),
@@ -490,6 +549,7 @@ function renderEventForm() {
   updateRegistrationModeFields();
   renderEventContext();
   renderEventDraft();
+  renderPreviousEventImport();
   elements.eventLoadSummary.textContent = `${event.quarter}에 저장된 자료를 아래 입력칸에 불러왔습니다.`;
 }
 
@@ -1365,6 +1425,7 @@ $("#add-agenda").addEventListener("click", () => {
   markEventDirty();
   $(".agenda-row:last-child input", $("#agenda-editor")).focus();
 });
+$("#import-previous-event").addEventListener("click", importPreviousEvent);
 $("#discard-event-changes").addEventListener("click", async () => {
   if (!await confirmAction({ title: "행사 변경 취소", message: "저장하지 않은 행사 설정을 모두 버릴까요?", confirmLabel: "변경 내용 버리기", danger: true })) return;
   state.events = clone(state.savedEvents);

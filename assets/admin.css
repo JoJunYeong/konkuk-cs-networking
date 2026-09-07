@@ -67,6 +67,13 @@ input[type=checkbox] { accent-color:var(--accent); width:18px; height:18px; min-
 .admin-tabs button { min-height:45px; padding:10px 20px; border:1px solid transparent; border-radius:10px; background:transparent; color:var(--muted); font-size:14px; font-weight:650; }
 .admin-tabs button.is-active { background:var(--ink); color:white; }
 .editor-form,.editor-main { display:grid; gap:18px; }
+.event-import { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; border:1px solid var(--line); border-radius:14px; background:white; }
+.event-import > div { min-width:0; }
+.event-import strong { font-size:14px; }
+.event-import .field-note { margin-top:4px; }
+.event-import > button { flex-shrink:0; }
+.event-import__status { margin-top:6px; font-size:12px; color:var(--accent); }
+.event-import__status:empty { display:none; }
 .editor-layout { display:grid; grid-template-columns:minmax(0,1fr) 275px; align-items:start; gap:22px; }
 .editor-card { min-width:0; display:grid; gap:18px; padding:26px; border:1px solid var(--line); border-radius:17px; background:white; }
 .card-heading { display:flex; align-items:start; justify-content:space-between; gap:16px; }
@@ -197,6 +204,7 @@ summary { cursor:pointer; font-size:14px; font-weight:650; min-height:30px; }
  .admin-tabs { gap:4px; }
  .admin-tabs button { flex:1; font-size:12px; padding:10px 8px; }
  .editor-card { padding:20px 17px; border-radius:14px; }
+ .event-import { align-items:stretch; flex-direction:column; padding:18px 17px; gap:12px; }
  .form-grid--two,.form-grid--three { grid-template-columns:1fr; }
  input,select,textarea { font-size:16px; }
  .card-heading { gap:9px; }

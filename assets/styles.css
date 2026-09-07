@@ -137,9 +137,8 @@ h1, h2, h3 { font-weight: 750; line-height: 1.35; letter-spacing: -.045em; text-
 .check-list li { display: flex; gap: 10px; color: var(--muted); font-size: 13px; }
 .check-list li::before { content: "✓"; color: var(--accent); font-weight: 800; }
 .audience__quote { padding: 35px; border-radius: 24px; background: linear-gradient(130deg, #eff8f1, #f0f4fb); }
-.quote-mark { display: block; color: #87b49a; font: 60px/1 Georgia, serif; height: 35px; }
-.audience blockquote { max-width: 330px; font-size: 22px; line-height: 1.65; letter-spacing: -.04em; font-weight: 650; }
-.audience__quote p { color: #768c7f; font-size: 10px; letter-spacing: .08em; margin-top: 20px; }
+.audience__quote h3 { font-size: 18px; }
+.audience__quote p { max-width: 330px; color: var(--muted); font-size: 15px; line-height: 1.8; margin-top: 12px; }
 .apply { background: var(--paper); border-block: 1px solid #eaf0ec; }
 .apply__grid { display: grid; grid-template-columns: .85fr 1.2fr; gap: 74px; align-items: start; }
 .apply__summary { position: sticky; top: 115px; }
@@ -323,7 +322,6 @@ h1, h2, h3 { font-weight: 750; line-height: 1.35; letter-spacing: -.045em; text-
   .timeline { grid-template-columns: 1fr; margin-top: 27px; }
   .timeline__item { padding-block: 20px; }
   .audience__quote { padding: 30px; }
-  .audience blockquote { font-size: 22px; }
   .summary-list { padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: #ffffff80; gap: 11px; }
   .flow-note { margin-top: 20px; }
   .apply__summary .location-note { margin-top: 10px; }

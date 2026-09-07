@@ -414,7 +414,7 @@
       setText(
         "#banner-copy",
         mode === "manual_transfer"
-          ? "참여신청을 준비하고 있어요. 준비가 끝나면 이곳에서 신청할 수 있습니다."
+          ? "아직 신청을 받지 않습니다. 준비가 완료되면 이 페이지에서 신청할 수 있습니다."
           : "신청·결제 링크를 연결하고 있습니다. 현재 이 페이지에서는 개인정보를 받지 않습니다.",
       );
     }
@@ -768,11 +768,11 @@
     setText("#ticket-capacity", `정원 ${event.capacity}명`);
     setText("#about-intro", event.aboutIntro || event.description);
     setText("#program-description", event.programDescription || "회차별 프로그램을 확인해 주세요.");
-    setText("#event-quote", event.quote || "분기마다 새로운 연결이 시작됩니다.");
+    setText("#event-quote", event.quote || "자세한 내용은 해당 회차의 일정을 확인해 주세요.");
     setText(
       "#apply-copy",
       usesManualTransfer
-        ? "정보를 적고, 참가비를 입금한 뒤 입금완료 버튼을 누르면 참여신청이 끝나요."
+        ? event.applicationCopy || "신청자 정보를 입력하고 참가비를 입금한 뒤, 입금완료 버튼을 눌러주세요."
         : event.applicationCopy || event.description,
     );
     setText("#summary-event", `${event.quarter} 네트워킹 데이`);
@@ -859,9 +859,9 @@
       );
       elements.copyBankAccount.disabled = !bank.accountNumber;
       setText("#flow-payment-title", "참가비 입금");
-      setText("#flow-notice-title", "입금완료 누르면 신청 끝");
+      setText("#flow-notice-title", "입금완료 버튼");
       setText("#flow-payment-copy", "안내된 계좌로 직접 송금");
-      setText("#flow-notice-copy", "입금 확인은 운영자가 할게요");
+      setText("#flow-notice-copy", "입금 내역은 운영자가 확인합니다.");
       setText("#transfer-refund-policy", bank.refundDeadlineLabel ? `신청·환불 마감: ${bank.refundDeadlineLabel}` : "환불 기준을 확인한 뒤 입금해 주세요.");
     } else {
       setText("#flow-payment-title", "신청·결제");
@@ -1142,7 +1142,7 @@
     if (!validateForm()) return;
     if (mode === "manual_transfer" && state.registrationStep === "info") {
       if (!bankTransferReady()) {
-        showStatus("참여신청을 준비하고 있어요. 잠시 후 다시 확인해 주세요.");
+        showStatus("아직 신청을 받지 않습니다. 잠시 후 다시 확인해 주세요.");
         return;
       }
       setRegistrationStep("payment", true);
@@ -1187,7 +1187,7 @@
       elements.form.setAttribute("aria-busy", "true");
       $$("input, button", elements.form).forEach(control => { control.disabled = true; });
       $$("button", elements.quarterTabs).forEach(control => { control.disabled = true; });
-      elements.submit.textContent = "참여신청을 마무리하는 중…";
+      elements.submit.textContent = "신청 중…";
 
       try {
         const registrationId = await createManualTransferRegistration(payload, selectedEvent);
@@ -1195,7 +1195,7 @@
         showManualTransferResult(payload, registrationId);
         renderReceipt(registrationId);
       } catch (_error) {
-        showStatus("신청 완료를 확인하지 못했어요. 입력한 내용은 유지됩니다. 다시 입금하지 말고 연결 상태를 확인한 뒤 재시도해 주세요.");
+        showStatus("신청 완료를 확인하지 못했습니다. 입력한 내용은 유지됩니다. 다시 입금하지 말고 연결 상태를 확인한 뒤 재시도해 주세요.");
       } finally {
         state.submitting = false;
         elements.form.removeAttribute("aria-busy");
@@ -1213,7 +1213,7 @@
 
     state.submitting = true;
     elements.submit.disabled = true;
-    elements.submit.textContent = "안전하게 연결하는 중…";
+    elements.submit.textContent = "연결 중…";
 
     try {
       const response = await fetch(config.registration.endpoint, {
@@ -1255,11 +1255,11 @@
 
   function showManualTransferResult(payload, registrationId) {
     state.lastRegistrationId = registrationId;
-    setText("#result-eyebrow", "REGISTRATION RECEIVED");
-    setText("#result-title", "참여신청이 완료됐어요.");
+    setText("#result-eyebrow", "신청 접수");
+    setText("#result-title", "신청이 접수되었습니다.");
     setText(
       "#result-copy",
-      "신청이 잘 접수됐어요. 운영자가 입금 내역을 확인한 뒤 참여 확정과 장소를 입력한 연락처로 안내합니다. 취소·환불에 필요한 신청번호를 저장해 주세요.",
+      "입금 확인 후 입력한 연락처로 참여 확정과 장소를 안내합니다. 취소·환불 요청에 필요한 신청번호를 보관해 주세요.",
     );
     renderResultRows([
       ["회차", state.event.quarter],
@@ -1462,7 +1462,7 @@
       setRegistrationStep("info", true);
     });
     elements.copyReceiptId.addEventListener("click", () => {
-      copyText(elements.copyReceiptId, state.lastRegistrationId, "신청번호를 복사했어요");
+      copyText(elements.copyReceiptId, state.lastRegistrationId, "신청번호 복사 완료");
     });
     $("#new-registration").addEventListener("click", () => {
       try { window.localStorage.removeItem(registrationStorageKey(state.event.id)); } catch (_error) {}
@@ -1472,7 +1472,7 @@
     });
     elements.refundForm.addEventListener("submit", submitRefundRequest);
     elements.copyBankAccount.addEventListener("click", () => {
-      copyText(elements.copyBankAccount, bankTransferDetails().accountNumber.replace(/\D/g, ""), "계좌번호만 복사했어요");
+      copyText(elements.copyBankAccount, bankTransferDetails().accountNumber.replace(/\D/g, ""), "계좌번호 복사 완료");
     });
     elements.copyRegistrationId.addEventListener("click", () => {
       copyText(elements.copyRegistrationId, state.lastRegistrationId, "신청번호를 복사했습니다");

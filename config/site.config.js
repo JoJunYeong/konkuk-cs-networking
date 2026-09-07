@@ -15,7 +15,7 @@ window.NETWORKING_SITE_CONFIG = {
     contactEmail: "",
     unofficialNotice:
       "건국대학교 컴퓨터공학 선후배가 직접 준비하는 비공식 모임입니다.",
-    shareText: "건국대 컴공 선후배가 분기마다 모입니다. 이번 모임에서 만나요.",
+    shareText: "건국대학교 컴퓨터공학과 선후배 네트워킹 모임 안내",
   },
 
   theme: {
@@ -95,26 +95,26 @@ window.NETWORKING_SITE_CONFIG = {
   values: [
     {
       number: "01",
-      title: "요즘 하는 일",
-      description: "회사나 학교에서 맡고 있는 일, 막혔던 일, 잘된 일을 나눕니다.",
+      title: "자기소개",
+      description: "각자 하는 일과 관심사를 소개합니다.",
     },
     {
       number: "02",
-      title: "선후배에게 묻기",
-      description: "취업, 대학원, 창업처럼 혼자 알아보기 어려운 이야기를 편하게 물어봅니다.",
+      title: "선배 이야기",
+      description: "회사, 연구, 창업 현장에서 겪은 일을 듣습니다.",
     },
     {
       number: "03",
-      title: "석 달에 한 번",
-      description: "부담스럽게 자주 모이지 않고, 한 분기에 한 번 안부를 잇습니다.",
+      title: "자유 대화",
+      description: "관심 있는 주제로 선후배와 이야기합니다.",
     },
   ],
 
   audience: [
-    "건국대학교 컴퓨터공학과 선후배를 만나고 싶은 분",
-    "취업, 이직, 대학원, 창업 이야기를 직접 듣고 싶은 분",
-    "후배에게 경험을 나누거나 선배에게 궁금한 점을 묻고 싶은 분",
-    "오랜만에 학교 사람들과 편하게 저녁을 먹고 싶은 분",
+    "건국대학교 컴퓨터공학과 편입생·재학생·졸업생",
+    "취업, 대학원, 창업에 대해 묻고 싶은 분",
+    "본인의 경험을 나누고 싶은 분",
+    "학과 선후배를 만나고 싶은 분",
   ],
 
   defaultFaq: [
@@ -146,7 +146,7 @@ window.NETWORKING_SITE_CONFIG = {
   ],
 
   manualTransferFaq: [
-    { question: "처음 가거나 혼자 가도 괜찮나요?", answer: "물론이에요. 건국대학교 컴퓨터공학과와 인연이 있는 편입생, 재학생, 졸업생 모두 환영합니다. 이름표를 받고 선후배와 편하게 인사해 주세요." },
+    { question: "누가 참여할 수 있나요?", answer: "건국대학교 컴퓨터공학과와 인연이 있는 편입생·재학생·졸업생이 신청할 수 있습니다." },
     {
       question: "입금완료 버튼을 누르면 신청이 끝나나요?",
       answer:
@@ -209,12 +209,12 @@ window.NETWORKING_SITE_CONFIG = {
       statusLabel: "신청 가능",
       featured: true,
       revision: 1788746544110,
-      eyebrow: "2026 Q3 · 건국대 컴공 선후배의 저녁 모임",
-      titleLineOne: "학교 밖에서,",
-      titleLineTwo: "우리 다시 만나요.",
+      eyebrow: "2026 Q3 · 선후배 모임",
+      titleLineOne: "건국 컴공",
+      titleLineTwo: "네트워킹",
       description:
-        "선배의 요즘, 후배의 고민, 그리고 내 이야기. 건국대 컴공 선후배와 편하게 나누는 저녁. 처음 오셔도 환영해요.",
-      notice: "9월 7일 신청·환불 마감 · 처음 오는 분도, 혼자 오는 분도 환영해요",
+        "건국대학교 컴퓨터공학과 선후배 모임입니다.",
+      notice: "9월 7일 신청·환불 마감",
       dateLabel: "2026년 9월 17일(목)",
       time: "19:00 시작 · 22:00 종료",
       venue: "홍대입구 인근",
@@ -229,14 +229,14 @@ window.NETWORKING_SITE_CONFIG = {
       bankAccountNumber: "",
       paymentAmount: 10000,
       refundDeadlineLabel: "2026년 9월 7일 23:59",
-      locationNotice: "정확한 장소는 입금 확인 후 입력한 연락처로 안내할게요.",
+      locationNotice: "정확한 장소는 입금 확인 후 입력한 연락처로 안내합니다.",
       applicationLabel: "참여 신청하기",
       applicationCopy:
-        "참가자 정보 입력 → 계좌이체 → 입금완료 버튼. 여기까지 하면 참여신청이 끝나요.",
+        "신청자 정보를 입력하고 참가비를 입금한 뒤, 입금완료 버튼을 눌러주세요.",
       aboutIntro:
-        "학교생활, 프로젝트, 취업, 회사에서 겪은 일을 편하게 나눕니다. 발표를 잘하거나 아는 사람이 많지 않아도 됩니다.",
-      quote: "선후배끼리 얼굴 한 번 보고, 다음에 연락할 수 있으면 충분합니다.",
-      programDescription: "퇴근하거나 수업을 마치고 오는 시간을 생각해, 늦게 도착해도 합류할 수 있게 진행합니다.",
+        "자기소개, 선배 이야기, 자유 대화 순서로 진행합니다.",
+      quote: "도착하는 순서대로 스터디룸 자리에 랜덤으로 착석합니다.",
+      programDescription: "19:00부터 22:00까지 진행합니다.",
       agenda: [
         { time: "19:00", title: "도착 및 시작", description: "도착하는 순서대로 스터디룸 자리에 랜덤으로 착석합니다." },
         { time: "19:10", title: "자기소개", description: "한 명씩 본인을 소개합니다." },

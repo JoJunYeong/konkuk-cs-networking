@@ -34,6 +34,7 @@
   }
 
   const config = clone(sourceConfig);
+  const { deadlinePassed, effectiveStatus, formatDeadline } = window.KURegistrationTime;
   const state = {
     event: null,
     submitting: false,
@@ -41,6 +42,7 @@
     lastRegistrationId: "",
     registrationStep: "info",
     managedHistory: null,
+    displayedRegistrationStatus: null,
   };
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -686,7 +688,9 @@
         !registrationDetails(event).url;
       const waitingForBankAccount =
         mode === "manual_transfer" && event.status === "open" && !bankTransferReady(event);
-      status.textContent = waitingForExternalLink
+      status.textContent = effectiveStatus(event) === "closed"
+        ? "마감"
+        : waitingForExternalLink
         ? "링크 준비 중"
         : waitingForBankAccount
           ? "신청 준비 중"
@@ -738,7 +742,9 @@
     const mode = registrationMode(event);
     const usesExternalRegistration = mode === "external";
     const usesManualTransfer = mode === "manual_transfer";
-    const isOpen = event.status === "open";
+    const status = effectiveStatus(event);
+    state.displayedRegistrationStatus = status;
+    const isOpen = status === "open";
     const hasRegistrationLink = Boolean(registration.url);
     const hasBankAccount = bankTransferReady(event);
     const routeReady = usesExternalRegistration
@@ -752,13 +758,16 @@
     setText("#event-eyebrow", event.eyebrow);
     setText(
       "#event-status",
-      isOpen && !routeReady ? waitingStatus : event.statusLabel,
+      status === "closed" ? "마감" : isOpen && !routeReady ? waitingStatus : event.statusLabel,
     );
-    $("#event-status").dataset.status = canRegister ? "open" : event.status === "closed" ? "closed" : "upcoming";
+    $("#event-status").dataset.status = canRegister ? "open" : status === "closed" ? "closed" : "upcoming";
     setText("#hero-title-line-one", event.titleLineOne);
     setText("#hero-title-line-two", event.titleLineTwo);
     setText("#hero-description", event.description);
     setText("#hero-notice", event.notice);
+    $("#hero-notice").hidden = !String(event.notice || "").trim();
+    setText("#registration-deadline", `접수 마감 · ${formatDeadline(event.registrationDeadline)} (한국 시간)`);
+    $("#registration-deadline").hidden = !event.registrationDeadline;
     setText("#ticket-quarter", event.quarter);
     setText("#ticket-number", event.sequence);
     setText("#ticket-date", event.dateLabel);
@@ -779,12 +788,13 @@
     setText("#summary-date", displayDate);
     setText("#summary-venue", event.venue);
     setText("#summary-price", event.priceLabel);
+    setText("#summary-registration-deadline", formatDeadline(event.registrationDeadline));
     setText(
       "#location-note",
       event.locationNotice || "정확한 장소는 신청·결제 완료자에게 운영자가 별도로 안내합니다.",
     );
 
-    const unavailableLabel = event.status === "closed"
+    const unavailableLabel = status === "closed"
       ? "신청 마감"
       : isOpen
         ? waitingStatus
@@ -817,7 +827,7 @@
     if (usesExternalRegistration) {
       const providerHeading = canRegister
         ? "지금 신청과 결제를 한 번에 완료하세요."
-        : event.status === "closed"
+        : status === "closed"
           ? "이번 회차 신청이 마감되었습니다."
           : isOpen
             ? "신청 페이지를 준비하고 있습니다."
@@ -862,7 +872,9 @@
       setText("#flow-notice-title", "입금완료 버튼");
       setText("#flow-payment-copy", "안내된 계좌로 직접 송금");
       setText("#flow-notice-copy", "입금 내역은 운영자가 확인합니다.");
-      setText("#transfer-refund-policy", bank.refundDeadlineLabel ? `신청·환불 마감: ${bank.refundDeadlineLabel}` : "환불 기준을 확인한 뒤 입금해 주세요.");
+      setText("#transfer-registration-deadline", event.registrationDeadline ? `접수 마감: ${formatDeadline(event.registrationDeadline)} (한국 시간)` : "");
+      $("#transfer-registration-deadline").hidden = !event.registrationDeadline;
+      setText("#transfer-refund-policy", bank.refundDeadlineLabel ? `환불 요청 마감: ${bank.refundDeadlineLabel}` : "환불 기준을 확인한 뒤 입금해 주세요.");
     } else {
       setText("#flow-payment-title", "신청·결제");
       setText("#flow-notice-title", "참여 확정 안내");
@@ -903,7 +915,7 @@
     elements.submit.disabled = !canRegister;
     elements.submit.textContent = canRegister
       ? submitLabelForMode()
-      : state.event.status === "closed"
+      : effectiveStatus(state.event) === "closed"
         ? "신청이 마감되었습니다"
         : state.event.status === "open"
           ? registrationMode() === "manual_transfer"
@@ -918,6 +930,14 @@
     if (mode === "manual_transfer") return state.registrationStep === "payment" ? "입금완료 · 참여신청 마무리" : "입금 안내 확인하기 →";
     if (mode === "api") return "신청 후 결제하기";
     return "신청 내용 확인하기";
+  }
+
+  function refreshDeadline() {
+    if (!state.event || state.submitting || effectiveStatus(state.event) === state.displayedRegistrationStatus) return;
+    updateEventContent();
+    if (deadlinePassed(state.event) && !rememberedRegistration(state.event.id)) {
+      showStatus("접수가 마감되었습니다. 이미 입금했다면 운영자에게 문의해 주세요.");
+    }
   }
 
   function setRegistrationStep(step, focus = false) {
@@ -1126,7 +1146,12 @@
     event.preventDefault();
     hideStatus();
 
-    if (state.event.status !== "open" || state.submitting) return;
+    if (state.submitting) return;
+    if (effectiveStatus(state.event) !== "open") {
+      updateEventContent();
+      showStatus(effectiveStatus(state.event) === "closed" ? "접수가 마감되었습니다. 이미 입금했다면 운영자에게 문의해 주세요." : "아직 신청을 받지 않습니다.");
+      return;
+    }
     const mode = registrationMode();
 
     if (mode === "external" && config.registration.providerHandlesForm) {
@@ -1195,13 +1220,16 @@
         showManualTransferResult(payload, registrationId);
         renderReceipt(registrationId);
       } catch (_error) {
-        showStatus("신청 완료를 확인하지 못했습니다. 입력한 내용은 유지됩니다. 다시 입금하지 말고 연결 상태를 확인한 뒤 재시도해 주세요.");
+        showStatus(deadlinePassed(selectedEvent)
+          ? "접수 시간이 지나 신청하지 못했습니다. 이미 입금했다면 운영자에게 문의해 주세요."
+          : "신청 완료를 확인하지 못했습니다. 입력한 내용은 유지됩니다. 다시 입금하지 말고 연결 상태를 확인한 뒤 재시도해 주세요.");
       } finally {
         state.submitting = false;
         elements.form.removeAttribute("aria-busy");
         $$("input, button", elements.form).forEach(control => { control.disabled = false; });
         $$("button", elements.quarterTabs).forEach(control => { control.disabled = false; });
-        elements.submit.textContent = submitLabelForMode();
+        if (effectiveStatus(state.event) !== "open") updateEventContent();
+        else elements.submit.textContent = submitLabelForMode();
       }
       return;
     }
@@ -1485,7 +1513,10 @@
 
     [elements.primaryCta, elements.headerCta, elements.mobileCta, elements.providerCta].forEach((cta) => {
       cta.addEventListener("click", (event) => {
-        if (cta.getAttribute("aria-disabled") === "true") event.preventDefault();
+        if (cta.getAttribute("aria-disabled") === "true" || effectiveStatus(state.event) !== "open") {
+          event.preventDefault();
+          refreshDeadline();
+        }
       });
     });
   }
@@ -1508,6 +1539,8 @@
     initializeDialogs();
     initializeEvents();
     selectEvent(initialEventId());
+    window.setInterval(refreshDeadline, 1000);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshDeadline(); });
   }
 
   initialize().catch(() => {

@@ -41,7 +41,7 @@ async function expectStatus(label, response, expected) {
   console.log(`PASS ${label} (${response.status})`);
 }
 
-async function seedGate(accepting) {
+async function seedGate(accepting, deadline = { nullValue: null }) {
   return request("/registrationGates/2026-Q3", {
     method: "PATCH",
     headers: { authorization: "Bearer owner" },
@@ -53,6 +53,7 @@ async function seedGate(accepting) {
         amount: integerValue(10000),
         capacity: integerValue(100),
         accepting: booleanValue(accepting),
+        registrationDeadline: deadline,
       },
     }),
   });
@@ -153,5 +154,29 @@ await expectStatus("gate rejects wrong amount", await createRegistration(wrongAm
 await expectStatus("wrong phone rejects refund", await createRefund(validId, "01099999999"), 403);
 await expectStatus("matching phone accepts refund", await createRefund(validId), 200);
 await expectStatus("public cannot read refund account", await request(`/refundRequests/${validId}`), 403);
+
+await expectStatus("seed future deadline", await seedGate(true, { timestampValue: new Date(Date.now() + 3600000).toISOString() }), 200);
+await expectStatus("before deadline accepts registration", await createRegistration("00000000000000000000000000000005"), 200);
+await expectStatus("seed expired deadline", await seedGate(true, { timestampValue: new Date(Date.now() - 1000).toISOString() }), 200);
+await expectStatus("expired deadline rejects registration", await createRegistration("00000000000000000000000000000006"), 403);
+await expectStatus("existing applicant can request refund after deadline", await createRefund("00000000000000000000000000000005"), 200);
+await expectStatus("admin can confirm after deadline", await request(`/registrations/${validId}?updateMask.fieldPaths=status`, {
+  method: "PATCH",
+  headers: { authorization: `Bearer ${emulatorToken("uk5noSfHHMU3y9l7CPkG5F0YRl33")}` },
+  body: JSON.stringify({ fields: { status: stringValue("confirmed") } }),
+}), 200);
+await expectStatus("seed invalid deadline", await seedGate(true, stringValue("2026-09-07T23:59")), 200);
+await expectStatus("invalid deadline fails closed", await createRegistration("00000000000000000000000000000007"), 403);
+await expectStatus("admin cannot drop deadline field", await request("/registrationGates/2026-Q3", {
+  method: "PATCH",
+  headers: { authorization: `Bearer ${emulatorToken("uk5noSfHHMU3y9l7CPkG5F0YRl33")}` },
+  body: JSON.stringify({ fields: { accepting: booleanValue(true) } }),
+}), 403);
+await expectStatus("seed gate without deadline", await request("/registrationGates/2026-Q3?updateMask.fieldPaths=registrationDeadline", {
+  method: "PATCH", headers: { authorization: "Bearer owner" }, body: JSON.stringify({ fields: {} }),
+}), 200);
+await expectStatus("missing deadline fails closed", await createRegistration("00000000000000000000000000000009"), 403);
+await expectStatus("restore no deadline", await seedGate(true), 200);
+await expectStatus("explicit no deadline accepts registration", await createRegistration("00000000000000000000000000000008"), 200);
 
 console.log("All Firestore rule checks passed.");

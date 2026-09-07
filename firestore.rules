@@ -28,8 +28,19 @@ service cloud.firestore {
         && eventId.matches('^[0-9]{4}-Q[1-4]$')
         && exists(registrationGatePath(eventId))
         && get(registrationGatePath(eventId)).data.accepting == true
+        && registrationDeadlineOpen(get(registrationGatePath(eventId)).data)
         && get(registrationGatePath(eventId)).data.mode == 'manual_transfer'
         && get(registrationGatePath(eventId)).data.amount == amount;
+    }
+
+    function validRegistrationDeadline(data) {
+      return data.keys().hasAll(['registrationDeadline'])
+        && (data.registrationDeadline == null || data.registrationDeadline is timestamp);
+    }
+
+    function registrationDeadlineOpen(data) {
+      return validRegistrationDeadline(data)
+        && (data.registrationDeadline == null || request.time < data.registrationDeadline);
     }
 
     match /siteData/{documentId} {
@@ -45,7 +56,8 @@ service cloud.firestore {
     // 관리자가 회차 저장 시 함께 갱신합니다. 공개 신청은 이 문서가 명시적으로
     // accepting=true인 자체 계좌이체 회차에만 생성할 수 있습니다.
     match /registrationGates/{eventId} {
-      allow read, create, update, delete: if isAdmin();
+      allow read, delete: if isAdmin();
+      allow create, update: if isAdmin() && validRegistrationDeadline(request.resource.data);
     }
 
     match /registrations/{registrationId} {

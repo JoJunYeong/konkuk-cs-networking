@@ -10,21 +10,21 @@ window.NETWORKING_SITE_CONFIG = {
   previewMode: false,
 
   site: {
-    brand: "KU CSE QUARTERLY",
-    title: "건국 컴퓨터공학 분기 네트워킹 데이",
+    brand: "KU meet",
+    title: "건국 컴공 네트워킹",
     contactEmail: "",
     unofficialNotice:
-      "건국대학교 공식 행사가 아닌 동문 주도 프로젝트이며, 움직이는 K/KU 마크는 이 페이지 전용 비공식 그래픽입니다.",
+      "건국대학교 컴퓨터공학 선후배가 직접 준비하는 비공식 모임입니다.",
     shareText: "건국대 컴공 선후배가 분기마다 모입니다. 이번 모임에서 만나요.",
   },
 
   theme: {
-    accent: "#7b2638",
-    accentSoft: "#e7d6d0",
-    ink: "#17231e",
-    forest: "#153d32",
-    paper: "#f2eee2",
-    white: "#fffdf7",
+    accent: "#147d59",
+    accentSoft: "#e7f7ef",
+    ink: "#172c25",
+    forest: "#124e3a",
+    paper: "#f7faf8",
+    white: "#ffffff",
   },
 
   // 공식 교표가 아닌 이 페이지 전용 비공식 K/KU 캐릭터입니다.
@@ -42,7 +42,7 @@ window.NETWORKING_SITE_CONFIG = {
     // external: 회차별 registrationUrl 또는 providerUrl로 이동
     // manual_transfer: 자체 신청서와 계좌이체 입금확인 요청 사용
     // api: endpoint로 신청서를 POST하고 응답의 checkoutUrl로 이동
-    mode: "external",
+    mode: "manual_transfer",
     provider: "onoffmix",
     providerLabel: "온오프믹스",
     providerUrl: "",
@@ -146,10 +146,11 @@ window.NETWORKING_SITE_CONFIG = {
   ],
 
   manualTransferFaq: [
+    { question: "처음 가거나 혼자 가도 괜찮나요?", answer: "물론이에요. 건국대학교 컴퓨터공학과와 인연이 있는 편입생, 재학생, 졸업생 모두 환영합니다. 이름표를 받고 선후배와 편하게 인사해 주세요." },
     {
-      question: "신청서를 내면 바로 참여가 확정되나요?",
+      question: "입금완료 버튼을 누르면 신청이 끝나나요?",
       answer:
-        "아닙니다. 신청서의 입금 완료 체크는 입금확인 요청입니다. 운영자가 실제 계좌 내역에서 입금자명과 금액을 확인한 뒤 참여가 확정됩니다.",
+        "네. 참가비를 보낸 뒤 입금완료 버튼을 누르고 신청번호가 표시되면 참여신청은 완료됩니다. 운영자가 실제 입금 내역을 확인한 뒤 참여 확정과 장소를 입력한 연락처로 안내합니다.",
     },
     {
       question: "입금자명이 신청자 이름과 달라도 되나요?",
@@ -207,20 +208,20 @@ window.NETWORKING_SITE_CONFIG = {
       status: "open",
       statusLabel: "신청 가능",
       featured: true,
-      revision: 1788511037000,
-      eyebrow: "KONKUK CSE ALUMNI · QUARTER 03",
-      titleLineOne: "건국대 컴공 사람들,",
-      titleLineTwo: "이번 분기에도 만나요.",
+      revision: 1788746544110,
+      eyebrow: "2026 Q3 · 건국대 컴공 선후배의 저녁 모임",
+      titleLineOne: "학교 밖에서,",
+      titleLineTwo: "우리 다시 만나요.",
       description:
-        "편입생, 재학생, 졸업생이 한자리에 모여 학교 이야기와 요즘 하는 일을 나눕니다. 처음 오셔도 괜찮습니다.",
-      notice: "9월 7일 신청·환불 마감 · 정확한 장소는 결제 완료자에게 별도 안내",
+        "선배의 요즘, 후배의 고민, 그리고 내 이야기. 건국대 컴공 선후배와 편하게 나누는 저녁. 처음 오셔도 환영해요.",
+      notice: "9월 7일 신청·환불 마감 · 처음 오는 분도, 혼자 오는 분도 환영해요",
       dateLabel: "2026년 9월 17일(목)",
       time: "19:00 시작 · 22:00 종료",
       venue: "홍대입구 인근",
       address: "",
       priceLabel: "10,000원",
       capacity: 100,
-      registrationMode: "external",
+      registrationMode: "manual_transfer",
       registrationProvider: "onoffmix",
       registrationUrl: "https://www.onoffmix.com/event/349124",
       bankName: "",
@@ -228,10 +229,10 @@ window.NETWORKING_SITE_CONFIG = {
       bankAccountNumber: "",
       paymentAmount: 10000,
       refundDeadlineLabel: "2026년 9월 7일 23:59",
-      locationNotice: "정확한 장소는 신청·결제 완료자에게 운영자가 별도로 안내합니다.",
-      applicationLabel: "신청·결제하기",
+      locationNotice: "정확한 장소는 입금 확인 후 입력한 연락처로 안내할게요.",
+      applicationLabel: "참여 신청하기",
       applicationCopy:
-        "9월 7일 23:59까지 외부 신청 페이지에서 참가자 정보 입력과 결제를 완료하면 참여가 확정됩니다.",
+        "참가자 정보 입력 → 계좌이체 → 입금완료 버튼. 여기까지 하면 참여신청이 끝나요.",
       aboutIntro:
         "학교생활, 프로젝트, 취업, 회사에서 겪은 일을 편하게 나눕니다. 발표를 잘하거나 아는 사람이 많지 않아도 됩니다.",
       quote: "선후배끼리 얼굴 한 번 보고, 다음에 연락할 수 있으면 충분합니다.",

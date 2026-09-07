@@ -7,7 +7,7 @@
       name="description"
       content="9월 17일 홍대입구에서 열리는 건국대학교 컴퓨터공학 편입생·재학생·졸업생 비공식 네트워킹 데이"
     />
-    <meta name="theme-color" content="#153d32" />
+    <meta name="theme-color" content="#147d59" />
     <meta property="og:locale" content="ko_KR" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="2026 Q3 건국대 컴공 선후배 네트워킹 데이" />
@@ -20,9 +20,9 @@
       property="og:image"
       content="https://jojunyeong.github.io/konkuk-cs-networking/assets/event-2026-q3.png"
     />
-    <meta property="og:image:width" content="440" />
-    <meta property="og:image:height" content="440" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="2026 Q3 건국대 컴공 선후배 네트워킹 데이" />
     <meta
       name="twitter:description"
@@ -33,19 +33,19 @@
       content="https://jojunyeong.github.io/konkuk-cs-networking/assets/event-2026-q3.png"
     />
     <link rel="canonical" href="https://jojunyeong.github.io/konkuk-cs-networking/" />
-    <title>KU CSE Quarterly Network</title>
+    <title>건국 컴공 네트워킹 · KU meet</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260904-bank-transfer" />
-    <script src="./config/site.config.js?v=20260904-bank-transfer"></script>
-    <script src="./config/firebase.config.js?v=20260904-bank-transfer"></script>
-    <script defer src="./assets/app.js?v=20260904-bank-transfer"></script>
+    <link rel="stylesheet" href="./assets/styles.css?v=20260907-meet" />
+    <script src="./config/site.config.js?v=20260907-meet"></script>
+    <script src="./config/firebase.config.js?v=20260907-meet"></script>
+    <script defer src="./assets/app.js?v=20260907-meet"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
 
     <div class="preview-banner" id="preview-banner" hidden>
       <div class="page-shell preview-banner__inner">
-        <p><strong id="banner-title">신청 준비 중</strong> <span id="banner-copy">신청·결제 링크를 연결하고 있습니다. 이 페이지에서는 개인정보를 받지 않습니다.</span></p>
+        <p><strong id="banner-title">신청 준비 중</strong> <span id="banner-copy">참여신청 링크를 연결하고 있습니다. 이 페이지에서는 개인정보를 받지 않습니다.</span></p>
         <button class="text-button text-button--light" id="open-customizer" type="button">
           화면에서 커스텀
         </button>
@@ -53,13 +53,6 @@
     </div>
 
     <header class="site-header" id="top">
-      <div class="site-header__utility">
-        <div class="page-shell">
-          <p>건국대학교 컴퓨터공학 편입생·재학생·졸업생의 비공식 분기 모임</p>
-          <p>NETWORKING DAY ARCHIVE · 2023—</p>
-        </div>
-      </div>
-
       <div class="page-shell site-header__inner">
         <a class="brand" href="#top" aria-label="KU CSE Quarterly Network 홈">
           <span class="brand__mark" aria-hidden="true">
@@ -67,19 +60,19 @@
             <small>CSE</small>
           </span>
           <span class="brand__copy">
-            <strong id="brand-name">KU CSE QUARTERLY</strong>
-            <small>Computer Engineering Club</small>
+            <strong id="brand-name">KU meet</strong>
+            <small>건국 컴공 네트워킹</small>
           </span>
         </a>
 
         <nav class="desktop-nav" aria-label="주요 메뉴">
-          <a href="#archive">지난 기록</a>
-          <a href="#about">모임 소개</a>
-          <a href="#program">이번 순서</a>
-          <a href="#apply">신청·결제</a>
+          <a href="#about">어떤 모임인가요?</a>
+          <a href="#program">이번 일정</a>
+          <a href="#archive">지난 모임</a>
+          <a href="#faq">궁금한 점</a>
         </nav>
 
-        <a class="button button--small button--ink header-cta" id="header-cta" href="#apply">신청·결제</a>
+        <a class="button button--small button--ink header-cta" id="header-cta" href="#apply">참여신청</a>
       </div>
     </header>
 
@@ -87,22 +80,16 @@
       <section class="hero" aria-labelledby="hero-title">
         <div class="floating-marks" id="floating-marks" aria-hidden="true"></div>
 
-        <div class="page-shell hero__registry" aria-hidden="true">
-          <span>QUARTERLY CIRCULAR</span>
-          <span>SEOUL · REPUBLIC OF KOREA</span>
-          <span>EST. RECORD 2023</span>
-        </div>
-
         <div class="page-shell hero__inner">
           <div class="hero__main">
             <div class="hero__eyebrow-row">
-              <p class="eyebrow" id="event-eyebrow">KONKUK CSE ALUMNI</p>
+              <p class="eyebrow" id="event-eyebrow">건국대 컴공 선후배의 저녁 모임</p>
               <span class="status-pill" id="event-status">신청 준비 중</span>
             </div>
 
             <h1 id="hero-title">
-              <span id="hero-title-line-one">건국대 컴공 사람들,</span>
-              <span class="hero__accent" id="hero-title-line-two">이번 분기에도 만나요.</span>
+              <span id="hero-title-line-one">학교 밖에서,</span>
+              <span class="hero__accent" id="hero-title-line-two">우리 다시 만나요.</span>
             </h1>
 
             <p class="hero__lead" id="hero-description">
@@ -110,8 +97,8 @@
             </p>
 
             <div class="hero__actions">
-              <a class="button button--accent" id="primary-cta" href="#apply">신청·결제하기</a>
-              <button class="button button--line" id="share-button" type="button">행사 링크 공유</button>
+              <a class="button button--accent" id="primary-cta" href="#apply">참여신청하기</a>
+              <button class="button button--line" id="share-button" type="button">친구에게 공유</button>
             </div>
 
             <p class="hero__notice" id="hero-notice">동문이 직접 준비하는 비공식 모임 · 아래 일정은 확정 전입니다.</p>
@@ -120,30 +107,30 @@
           <aside class="event-ticket" aria-label="이번 분기 행사 정보">
             <div class="event-ticket__topline">
               <span id="ticket-quarter">2026 Q3</span>
-              <span>ISSUE</span>
+              <span>이번에 만날 날</span>
             </div>
             <div class="event-ticket__number" id="ticket-number">03</div>
             <div class="event-ticket__details">
               <div>
-                <span>날짜 / DATE</span>
-                <strong id="ticket-date">일정 확정 후 공개</strong>
+                <span>언제</span>
+                <strong id="ticket-date">2026년 9월 17일(목)</strong>
               </div>
               <div>
-                <span>시간 / TIME</span>
-                <strong id="ticket-time">시간 확정 후 공개</strong>
+                <span>몇 시에</span>
+                <strong id="ticket-time">19:00 시작 · 22:00 종료</strong>
               </div>
               <div>
-                <span>장소 / PLACE</span>
-                <strong id="ticket-venue">장소 확정 후 공개</strong>
+                <span>어디서</span>
+                <strong id="ticket-venue">홍대입구 인근</strong>
               </div>
               <div>
-                <span>참가비 / FEE</span>
-                <strong id="ticket-price">참가비 확정 후 공개</strong>
+                <span>참가비</span>
+                <strong id="ticket-price">10,000원</strong>
               </div>
             </div>
             <div class="event-ticket__footer">
-              <span id="ticket-capacity">정원 미정</span>
-              <span>QUARTERLY GATHERING</span>
+              <span id="ticket-capacity">정원 100명</span>
+              <span>편입생 · 재학생 · 졸업생</span>
             </div>
           </aside>
         </div>
@@ -152,66 +139,22 @@
       <section class="registration-path" id="registration-path" aria-label="참가 신청 진행 순서">
         <div class="page-shell registration-path__inner">
           <div class="registration-path__intro">
-            <p class="eyebrow eyebrow--dark">ONE SIMPLE FLOW</p>
-            <strong>신청부터 장소 안내까지 한곳에서</strong>
+            <p class="eyebrow eyebrow--dark">HOW TO JOIN</p>
+            <strong>참여신청, 이렇게 간단해요</strong>
           </div>
           <ol class="registration-path__steps">
-            <li><span>01</span><strong>참가 신청</strong><small>필요한 정보만 입력</small></li>
-            <li><span>02</span><strong>결제·참여 확정</strong><small id="flow-payment-copy">외부 결제 상태로 확인</small></li>
-            <li><span>03</span><strong>장소·입장 안내</strong><small id="flow-notice-copy">확정자에게 별도 공지</small></li>
+            <li><span>1</span><strong id="flow-info-title">내 정보 입력</strong><small>이름과 연락처만 간단히</small></li>
+            <li><span>2</span><strong id="flow-payment-title">참가비 입금</strong><small id="flow-payment-copy">안내된 계좌로 직접 송금</small></li>
+            <li><span>3</span><strong id="flow-notice-title">입금완료 누르면 신청 끝</strong><small id="flow-notice-copy">입금 확인은 운영자가 할게요</small></li>
           </ol>
-        </div>
-      </section>
-
-      <section class="quarter-switcher" aria-labelledby="quarter-heading">
-        <div class="page-shell">
-          <div class="section-heading section-heading--inline">
-            <div>
-              <p class="eyebrow eyebrow--dark">CURRENT & NEXT</p>
-              <h2 id="quarter-heading">다가오는 모임과 지난 회차</h2>
-            </div>
-            <p>회차를 누르면 상세 일정이 바뀝니다.</p>
-          </div>
-          <div class="quarter-tabs" id="quarter-tabs" role="group" aria-label="행사 회차 선택"></div>
-        </div>
-      </section>
-
-      <section class="archive section" id="archive" aria-labelledby="archive-heading">
-        <div class="page-shell">
-          <div class="archive__header">
-            <div>
-              <p class="eyebrow eyebrow--dark">NETWORKING DAY ARCHIVE · 2023—</p>
-              <h2 id="archive-heading">지금까지 세 번<br />함께 모였습니다.</h2>
-              <p class="archive__intro">
-                2023년에 열린 세 번의 모임을 날짜순으로 정리했습니다. 참석자의 이름과 사진은 싣지 않았습니다.
-              </p>
-            </div>
-            <dl class="archive__stats" aria-label="네트워킹 데이 기록 요약">
-              <div>
-                <dt>기록된 회차</dt>
-                <dd id="archive-count">—</dd>
-              </div>
-              <div>
-                <dt>기록상 누적 참석</dt>
-                <dd id="archive-attendance">—</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div class="archive-list" id="archive-list" aria-live="polite">
-            <p class="archive-list__loading">지난 모임 기록을 불러오는 중입니다.</p>
-          </div>
-          <p class="archive__source" id="archive-source-note">
-            공개용 필드만 표시하며 참석자 사진과 개인 연락처는 자동으로 가져오지 않습니다.
-          </p>
         </div>
       </section>
 
       <section class="about section" id="about" aria-labelledby="about-heading">
         <div class="page-shell about__grid">
           <div class="section-heading section-heading--sticky">
-            <p class="eyebrow eyebrow--dark">WHY WE MEET</p>
-            <h2 id="about-heading">모이면 무슨 이야기를<br />하나요?</h2>
+            <p class="eyebrow eyebrow--dark">A GOOD REASON TO MEET</p>
+            <h2 id="about-heading">요즘 어떻게 지내는지,<br />그 얘기부터 해요.</h2>
           </div>
 
           <div class="about__content">
@@ -223,12 +166,25 @@
         </div>
       </section>
 
+      <section class="quarter-switcher" aria-labelledby="quarter-heading">
+        <div class="page-shell">
+          <div class="section-heading section-heading--inline">
+            <div>
+              <p class="eyebrow eyebrow--dark">OUR NEXT MEETUP</p>
+              <h2 id="quarter-heading">어느 모임에서 만날까요?</h2>
+            </div>
+            <p>회차를 누르면 상세 일정이 바뀝니다.</p>
+          </div>
+          <div class="quarter-tabs" id="quarter-tabs" role="group" aria-label="행사 회차 선택"></div>
+        </div>
+      </section>
+
       <section class="program section section--ink" id="program" aria-labelledby="program-heading">
         <div class="page-shell">
           <div class="section-heading section-heading--light section-heading--inline">
             <div>
-              <p class="eyebrow">ORDER OF THE EVENING</p>
-              <h2 id="program-heading">저녁 일곱 시부터<br />이렇게 진행합니다.</h2>
+              <p class="eyebrow">THE EVENING</p>
+              <h2 id="program-heading">반가운 인사부터<br />아쉬운 헤어짐까지.</h2>
             </div>
             <p id="program-description">도착하는 시간이 조금 달라도 자연스럽게 합류할 수 있게 준비했습니다.</p>
           </div>
@@ -240,8 +196,8 @@
       <section class="audience section" aria-labelledby="audience-heading">
         <div class="page-shell audience__grid">
           <div class="audience__card">
-            <p class="eyebrow eyebrow--dark">WHO IS THIS FOR?</p>
-            <h2 id="audience-heading">이런 분은 편하게 오세요.</h2>
+            <p class="eyebrow eyebrow--dark">YOU ARE WELCOME</p>
+            <h2 id="audience-heading">혼자 와도 괜찮아요.</h2>
             <ul class="check-list" id="audience-list"></ul>
           </div>
           <div class="audience__quote">
@@ -257,9 +213,9 @@
       <section class="apply section" id="apply" aria-labelledby="apply-heading">
         <div class="page-shell apply__grid">
           <div class="apply__summary">
-            <p class="eyebrow">REGISTRATION</p>
-            <h2 id="apply-heading">이번 분기<br />참가 신청</h2>
-            <p id="apply-copy">아래 내용을 보내고 참가비가 확인되면 자리를 확정해 드립니다.</p>
+            <p class="eyebrow">LET’S MEET</p>
+            <h2 id="apply-heading">이번엔,<br />같이 만나요.</h2>
+            <p id="apply-copy">정보를 적고, 참가비를 입금한 뒤 입금완료 버튼을 누르면 참여신청이 끝나요.</p>
 
             <dl class="summary-list">
               <div>
@@ -268,26 +224,26 @@
               </div>
               <div>
                 <dt>일정</dt>
-                <dd id="summary-date">일정 확정 후 공개</dd>
+                <dd id="summary-date">2026년 9월 17일(목)</dd>
               </div>
               <div>
                 <dt>장소</dt>
-                <dd id="summary-venue">장소 확정 후 공개</dd>
+                <dd id="summary-venue">홍대입구 인근</dd>
               </div>
               <div>
                 <dt>참가비</dt>
-                <dd id="summary-price">참가비 확정 후 공개</dd>
+                <dd id="summary-price">10,000원</dd>
               </div>
             </dl>
 
             <div class="flow-note">
-              <span>01 신청</span>
+              <span>정보 입력</span>
               <i aria-hidden="true">→</i>
-              <span>02 결제·확정</span>
+              <span>계좌이체</span>
               <i aria-hidden="true">→</i>
-              <span>03 장소 공지</span>
+              <span>신청 완료</span>
             </div>
-            <p class="location-note" id="location-note">정확한 장소는 신청·결제 완료자에게 별도로 안내합니다.</p>
+            <p class="location-note" id="location-note">정확한 장소는 참여신청 완료자에게 별도로 안내합니다.</p>
           </div>
 
           <div class="form-card">
@@ -316,68 +272,55 @@
               </div>
             </div>
             <div class="form-card__status" id="form-status" role="status" aria-live="polite"></div>
+            <section class="registration-receipt" id="registration-receipt" hidden aria-labelledby="receipt-title" tabindex="-1">
+              <span class="receipt-check" aria-hidden="true">✓</span>
+              <p class="eyebrow">SEE YOU SOON</p>
+              <h3 id="receipt-title">참여신청이 완료됐어요.</h3>
+              <p>운영자가 입금 내역을 확인할게요.<br />참여 확정과 장소는 입력한 연락처로 안내합니다.</p>
+              <span class="receipt-status">신청 접수 완료 · 입금 확인 중</span>
+              <div class="receipt-id"><span>이 브라우저에 저장된 신청번호</span><strong id="receipt-registration-id"></strong></div>
+              <button class="button button--accent button--full" id="copy-receipt-id" type="button">신청번호 복사</button>
+              <button class="text-button" id="new-registration" type="button">다른 참가자 신청하기</button>
+              <small>이 화면은 신청 접수 내역입니다. 이후 입금 확인 결과는 운영자가 별도로 안내합니다.</small>
+            </section>
             <form id="registration-form" novalidate>
-              <section class="bank-transfer-card" id="bank-transfer-card" aria-labelledby="bank-transfer-title" hidden>
-                <div class="bank-transfer-card__heading">
-                  <div>
-                    <span class="form-step">STEP 00</span>
-                    <h3 id="bank-transfer-title">먼저 참가비를 보내주세요</h3>
-                  </div>
-                  <span class="provider-status">계좌이체</span>
+              <ol class="form-progress" aria-label="참여신청 단계">
+                <li id="progress-info" aria-current="step"><span>1</span>참가자 정보</li>
+                <li id="progress-payment"><span>2</span>입금 후 신청 완료</li>
+              </ol>
+              <div id="registration-info-step">
+                <div class="form-heading">
+                  <div><span class="form-step">STEP 1 OF 2</span><h3 tabindex="-1" id="info-step-title">반가워요. 어떻게 불러드릴까요?</h3></div>
+                  <span class="required-note">모두 필수예요</span>
                 </div>
+                <div class="form-grid" id="dynamic-fields"></div>
+                <label class="form-honeypot" aria-hidden="true"><span>회사명</span><input name="company" type="text" tabindex="-1" autocomplete="off" /></label>
+                <fieldset class="consent-group">
+                  <legend>개인정보 동의</legend>
+                  <label class="check-control">
+                    <input type="checkbox" name="privacyConsent" required />
+                    <span><strong>참여신청을 위한 개인정보 수집·이용에 동의해요.</strong><small id="privacy-summary">행사 신청 확인 및 안내에 사용하며 행사 종료 90일 뒤 파기합니다.</small></span>
+                  </label>
+                </fieldset>
+              </div>
+              <section class="bank-transfer-card" id="bank-transfer-card" aria-labelledby="bank-transfer-title" hidden>
+                <div class="form-heading"><div><span class="form-step">STEP 2 OF 2</span><h3 id="bank-transfer-title" tabindex="-1">참가비를 보내면, 거의 다 됐어요.</h3></div></div>
+                <div class="transfer-review" id="transfer-review"></div>
+                <p class="transfer-instruction">아래 계좌로 입금한 뒤 <strong>입금완료</strong> 버튼을 눌러주세요.</p>
                 <dl class="bank-transfer-details">
+                  <div class="bank-amount"><dt>보내실 금액</dt><dd id="bank-transfer-amount">—</dd></div>
                   <div><dt>은행</dt><dd id="bank-name">—</dd></div>
                   <div><dt>계좌번호</dt><dd id="bank-account-number">—</dd></div>
                   <div><dt>예금주</dt><dd id="bank-account-holder">—</dd></div>
-                  <div><dt>입금액</dt><dd id="bank-transfer-amount">—</dd></div>
+                  <div><dt>입금자명</dt><dd id="bank-depositor-name">—</dd></div>
                 </dl>
-                <button class="button button--line button--full bank-copy-button" id="copy-bank-account" type="button">
-                  계좌번호 복사
-                </button>
-                <p>
-                  송금 뒤 실제 입금자명을 아래에 적어 주세요. 신청서를 보내도 즉시 확정되는 것은 아니며,
-                  운영자가 계좌 내역을 대조한 뒤 확정합니다.
-                </p>
+                <button class="button button--line button--full bank-copy-button" id="copy-bank-account" type="button">계좌번호만 복사</button>
+                <p class="transfer-policy" id="transfer-refund-policy"></p>
+                <p class="transfer-policy">버튼을 누르면 참여신청이 접수됩니다. 실제 입금 여부는 운영자가 확인해요.</p>
               </section>
-
-              <div class="form-heading">
-                <div>
-                  <span class="form-step">STEP 01</span>
-                  <h3>참가자 정보</h3>
-                </div>
-                <span class="required-note">* 필수 입력</span>
-              </div>
-
-              <div class="form-grid" id="dynamic-fields"></div>
-              <label class="form-honeypot" aria-hidden="true">
-                <span>회사명</span>
-                <input name="company" type="text" tabindex="-1" autocomplete="off" />
-              </label>
-
-              <fieldset class="consent-group">
-                <legend>약관 및 개인정보 동의</legend>
-                <label class="check-control" id="payment-sent-control" hidden>
-                  <input type="checkbox" name="paymentSent" />
-                  <span>
-                    <strong>[필수] 위 계좌로 참가비를 송금했습니다.</strong>
-                    <small>이 체크는 입금확인 요청이며, 실제 계좌 내역 확인 전에는 참여가 확정되지 않습니다.</small>
-                  </span>
-                </label>
-                <label class="check-control">
-                  <input type="checkbox" name="privacyConsent" required />
-                  <span>
-                    <strong>[필수] 개인정보 수집·이용에 동의합니다.</strong>
-                    <small id="privacy-summary">행사 신청 확인 및 안내 목적으로 수집하며 보유기간 종료 후 파기합니다.</small>
-                  </span>
-                </label>
-              </fieldset>
-
-              <button class="button button--accent button--full" id="submit-button" type="submit">
-                신청 내용 확인하기
-              </button>
-              <p class="form-footnote" id="form-footnote">
-                현재 미리보기 모드입니다. 입력 내용은 저장되거나 전송되지 않습니다.
-              </p>
+              <button class="button button--accent button--full" id="submit-button" type="submit">입금 안내 확인하기</button>
+              <button class="text-button form-back" id="back-to-info" type="button" hidden>← 참가자 정보 수정</button>
+              <p class="form-footnote" id="form-footnote">입금 후 마지막 버튼까지 눌러야 신청이 접수됩니다.</p>
             </form>
 
             <details class="refund-request" id="refund-request" hidden>
@@ -426,7 +369,38 @@
         </div>
       </section>
 
-      <section class="faq section" aria-labelledby="faq-heading">
+      <section class="archive section" id="archive" aria-labelledby="archive-heading">
+        <div class="page-shell">
+          <div class="archive__header">
+            <div>
+              <p class="eyebrow eyebrow--dark">OUR MEMORIES · SINCE 2023</p>
+              <h2 id="archive-heading">우리의 만남은<br />차곡차곡 쌓이는 중.</h2>
+              <p class="archive__intro">
+                2023년, 세 번의 저녁에 78명이 함께했어요. 다음 이야기는 여기서 이어집니다.
+              </p>
+            </div>
+            <dl class="archive__stats" aria-label="네트워킹 데이 기록 요약">
+              <div>
+                <dt>기록된 회차</dt>
+                <dd id="archive-count">—</dd>
+              </div>
+              <div>
+                <dt>기록상 누적 참석</dt>
+                <dd id="archive-attendance">—</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="archive-list" id="archive-list" aria-live="polite">
+            <p class="archive-list__loading">지난 모임 기록을 불러오는 중입니다.</p>
+          </div>
+          <p class="archive__source" id="archive-source-note">
+            공개용 필드만 표시하며 참석자 사진과 개인 연락처는 자동으로 가져오지 않습니다.
+          </p>
+        </div>
+      </section>
+
+      <section class="faq section" id="faq" aria-labelledby="faq-heading">
         <div class="page-shell faq__grid">
           <div class="section-heading">
             <p class="eyebrow eyebrow--dark">BEFORE YOU JOIN</p>
@@ -440,20 +414,20 @@
     <footer class="site-footer">
       <div class="page-shell site-footer__inner">
         <div>
-          <strong id="footer-brand">KU CSE QUARTERLY</strong>
+          <strong id="footer-brand">KU meet</strong>
           <p id="footer-note">건국대학교 공식 행사가 아닌 동문 주도 네트워킹 프로젝트입니다.</p>
         </div>
         <div class="site-footer__links">
           <a id="contact-link" href="#" hidden>운영 문의</a>
           <a href="#archive">지난 기록</a>
-          <a href="#apply">신청·결제</a>
+          <a href="#apply">참여신청</a>
           <a href="./admin.html" rel="nofollow">관리자</a>
           <button id="footer-share" type="button">링크 공유</button>
         </div>
       </div>
     </footer>
 
-    <a class="mobile-cta" href="#apply" id="mobile-cta">신청·결제하기</a>
+    <a class="mobile-cta" href="#apply" id="mobile-cta">참여신청하기</a>
 
     <dialog class="modal" id="result-dialog" aria-labelledby="result-title">
       <button class="modal__close" type="button" data-close-dialog aria-label="닫기">×</button>

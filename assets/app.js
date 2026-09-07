@@ -39,6 +39,7 @@
     submitting: false,
     refundSubmitting: false,
     lastRegistrationId: "",
+    registrationStep: "info",
     managedHistory: null,
   };
 
@@ -58,8 +59,10 @@
     fields: $("#dynamic-fields"),
     submit: $("#submit-button"),
     bankTransferCard: $("#bank-transfer-card"),
-    paymentSentControl: $("#payment-sent-control"),
-    paymentSent: $('input[name="paymentSent"]'),
+    infoStep: $("#registration-info-step"),
+    backToInfo: $("#back-to-info"),
+    receipt: $("#registration-receipt"),
+    copyReceiptId: $("#copy-receipt-id"),
     copyBankAccount: $("#copy-bank-account"),
     refundRequest: $("#refund-request"),
     refundForm: $("#refund-form"),
@@ -145,20 +148,28 @@
     { x: "9%", y: "88%", size: "44px", duration: "19s", delay: "-12s" },
   ];
 
+  function localFirestoreEmulator() {
+    if (!["localhost", "127.0.0.1"].includes(window.location.hostname)) return null;
+    const raw = new URLSearchParams(window.location.search).get("firestoreEmulator") || "";
+    return /^(localhost|127\.0\.0\.1):(\d{2,5})$/.test(raw) ? raw : null;
+  }
+
   async function fetchManagedPayload(documentName) {
     const runtime = window.KU_ADMIN_FIREBASE;
     if (!runtime?.firebase?.projectId || !runtime?.firebase?.apiKey) return null;
 
     const collection = encodeURIComponent(runtime.collection || "siteData");
     const documentId = encodeURIComponent(runtime.documents?.[documentName] || documentName);
-    const projectId = encodeURIComponent(runtime.firebase.projectId);
+    const emulator = localFirestoreEmulator();
+    const projectId = encodeURIComponent(emulator ? "demo-ku-networking" : runtime.firebase.projectId);
     const apiKey = encodeURIComponent(runtime.firebase.apiKey);
+    const host = emulator ? `http://${emulator}` : "https://firestore.googleapis.com";
     const endpoint =
-      `https://firestore.googleapis.com/v1/projects/${projectId}` +
+      `${host}/v1/projects/${projectId}` +
       `/databases/(default)/documents/${collection}/${documentId}?key=${apiKey}`;
 
     try {
-      const response = await fetch(endpoint, { cache: "no-store" });
+      const response = await fetch(endpoint, { cache: "no-store", signal: typeof AbortSignal.timeout === "function" ? AbortSignal.timeout(6000) : undefined });
       if (response.status === 404 || response.status === 403) return null;
       if (!response.ok) throw new Error(`managed_data_${response.status}`);
       const documentData = await response.json();
@@ -194,12 +205,13 @@
         import("https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js"),
         import("https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js"),
       ]).then(([appModule, firestoreModule]) => {
+        const emulator = localFirestoreEmulator();
+        const firebaseConfig = emulator ? { ...runtime.firebase, projectId: "demo-ku-networking" } : runtime.firebase;
         const app = appModule.getApps().length
           ? appModule.getApp()
-          : appModule.initializeApp(runtime.firebase);
+          : appModule.initializeApp(firebaseConfig);
         const db = firestoreModule.getFirestore(app);
-        const emulator = new URLSearchParams(window.location.search).get("firestoreEmulator");
-        if (["localhost", "127.0.0.1"].includes(window.location.hostname) && emulator) {
+        if (emulator) {
           const match = /^(localhost|127\.0\.0\.1):(\d{2,5})$/.exec(emulator);
           if (match) firestoreModule.connectFirestoreEmulator(db, match[1], Number(match[2]));
         }
@@ -260,16 +272,16 @@
     return Boolean(stored && Date.now() - Number(stored.submittedAt || 0) < 60_000);
   }
 
-  async function createManualTransferRegistration(payload) {
-    const details = bankTransferDetails();
+  async function createManualTransferRegistration(payload, selectedEvent) {
+    const details = bankTransferDetails(selectedEvent);
     const digits = phoneDigits(payload.fields.phone);
     if (!/^01\d{8,9}$/.test(digits)) throw new Error("phone_invalid");
 
     const client = await firestoreClient();
     const registrationId = secureRegistrationId();
     const record = {
-      eventId: state.event.id,
-      eventQuarter: String(state.event.quarter || state.event.id).slice(0, 40),
+      eventId: selectedEvent.id,
+      eventQuarter: String(selectedEvent.quarter || selectedEvent.id).slice(0, 40),
       status: "payment_reported",
       name: payload.fields.name.slice(0, 40),
       phone: payload.fields.phone.slice(0, 24),
@@ -285,7 +297,7 @@
     };
 
     await client.setDoc(client.doc(client.db, "registrations", registrationId), record);
-    rememberRegistration(state.event.id, registrationId);
+    rememberRegistration(selectedEvent.id, registrationId);
     return registrationId;
   }
 
@@ -402,7 +414,7 @@
       setText(
         "#banner-copy",
         mode === "manual_transfer"
-          ? "입금 계좌를 연결하고 있습니다. 계좌 정보가 완성되기 전에는 신청서를 받지 않습니다."
+          ? "참여신청을 준비하고 있어요. 준비가 끝나면 이곳에서 신청할 수 있습니다."
           : "신청·결제 링크를 연결하고 있습니다. 현재 이 페이지에서는 개인정보를 받지 않습니다.",
       );
     }
@@ -564,7 +576,7 @@
     }
 
     try {
-      const response = await fetch("./data/history.json", { cache: "no-store" });
+      const response = await fetch("./data/history.json", { cache: "no-store", signal: typeof AbortSignal.timeout === "function" ? AbortSignal.timeout(6000) : undefined });
       if (!response.ok) throw new Error(`history_${response.status}`);
       renderHistory(await response.json());
     } catch (_error) {
@@ -677,7 +689,7 @@
       status.textContent = waitingForExternalLink
         ? "링크 준비 중"
         : waitingForBankAccount
-          ? "계좌 준비 중"
+          ? "신청 준비 중"
           : event.statusLabel;
       label.append(strong, status);
 
@@ -735,7 +747,7 @@
         ? hasBankAccount
         : true;
     const canRegister = isOpen && routeReady;
-    const waitingStatus = usesManualTransfer ? "입금 계좌 준비 중" : "신청 링크 준비 중";
+    const waitingStatus = usesManualTransfer ? "신청 준비 중" : "신청 링크 준비 중";
 
     setText("#event-eyebrow", event.eyebrow);
     setText(
@@ -760,7 +772,7 @@
     setText(
       "#apply-copy",
       usesManualTransfer
-        ? "안내 계좌로 참가비를 보낸 뒤 이름, 휴대전화와 실제 입금자명을 제출해 주세요. 입금 내역 확인 후 참여가 확정됩니다."
+        ? "정보를 적고, 참가비를 입금한 뒤 입금완료 버튼을 누르면 참여신청이 끝나요."
         : event.applicationCopy || event.description,
     );
     setText("#summary-event", `${event.quarter} 네트워킹 데이`);
@@ -778,7 +790,7 @@
         ? waitingStatus
         : "오픈 예정";
     const readyLabel = usesManualTransfer
-      ? "입금 후 신청하기"
+      ? "참여 신청하기"
       : event.applicationLabel === "참가 신청하기"
         ? "신청·결제하기"
         : event.applicationLabel || "신청·결제하기";
@@ -792,13 +804,13 @@
     configureCta(elements.mobileCta, {
       enabled: canRegister,
       href: destination,
-      label: canRegister ? (usesManualTransfer ? "입금 후 신청하기" : "신청·결제하기 ↗") : unavailableLabel,
+      label: canRegister ? (usesManualTransfer ? "참여 신청하기" : "신청·결제하기 ↗") : unavailableLabel,
       external: usesExternalRegistration,
     });
     configureCta(elements.headerCta, {
       enabled: canRegister,
       href: destination,
-      label: canRegister ? (usesManualTransfer ? "참가 신청" : "신청·결제 ↗") : unavailableLabel,
+      label: canRegister ? (usesManualTransfer ? "참여 신청" : "신청·결제 ↗") : unavailableLabel,
       external: usesExternalRegistration,
     });
 
@@ -830,9 +842,7 @@
     const providerOwnsForm = usesExternalRegistration && config.registration.providerHandlesForm;
     elements.form.hidden = providerOwnsForm;
     elements.managedRegistration.hidden = !providerOwnsForm;
-    elements.bankTransferCard.hidden = !usesManualTransfer;
-    elements.paymentSentControl.hidden = !usesManualTransfer;
-    elements.paymentSent.required = usesManualTransfer;
+    elements.bankTransferCard.hidden = true;
     elements.refundRequest.hidden = !usesManualTransfer || event.status === "upcoming";
 
     if (usesManualTransfer) {
@@ -848,10 +858,15 @@
           : "환불 마감과 처리 기준을 확인해 주세요.",
       );
       elements.copyBankAccount.disabled = !bank.accountNumber;
-      setText("#flow-payment-copy", "입금자명·금액을 일괄 대조");
-      setText("#flow-notice-copy", "확정자에게 운영자가 별도 공지");
+      setText("#flow-payment-title", "참가비 입금");
+      setText("#flow-notice-title", "입금완료 누르면 신청 끝");
+      setText("#flow-payment-copy", "안내된 계좌로 직접 송금");
+      setText("#flow-notice-copy", "입금 확인은 운영자가 할게요");
+      setText("#transfer-refund-policy", bank.refundDeadlineLabel ? `신청·환불 마감: ${bank.refundDeadlineLabel}` : "환불 기준을 확인한 뒤 입금해 주세요.");
     } else {
-      setText("#flow-payment-copy", "외부 결제 상태로 확인");
+      setText("#flow-payment-title", "신청·결제");
+      setText("#flow-notice-title", "참여 확정 안내");
+      setText("#flow-payment-copy", "외부 신청 페이지에서 진행");
       setText("#flow-notice-copy", "확정자에게 별도 공지");
     }
 
@@ -862,7 +877,7 @@
         : usesExternalRegistration
           ? "신청과 결제는 연결된 외부 제공자의 페이지에서 완료됩니다."
           : usesManualTransfer
-            ? "제출 직후 상태는 ‘입금확인 대기’입니다. 실제 계좌 내역 확인 전에는 참여가 확정되지 않습니다."
+            ? "입금 후 마지막 버튼까지 눌러야 신청이 접수됩니다."
             : "결제 승인 전에는 참여가 확정되지 않습니다.",
     );
 
@@ -872,6 +887,8 @@
     }
 
     setFormAvailability(canRegister);
+    setRegistrationStep("info");
+    renderReceipt();
     updateBanner(isOpen, routeReady);
     renderTimeline();
     renderFaq();
@@ -898,12 +915,47 @@
   function submitLabelForMode() {
     const mode = registrationMode();
     if (mode === "external") return "외부 결제 페이지로 이동";
-    if (mode === "manual_transfer") return "입금 확인 요청하기";
+    if (mode === "manual_transfer") return state.registrationStep === "payment" ? "입금완료 · 참여신청 마무리" : "입금 안내 확인하기 →";
     if (mode === "api") return "신청 후 결제하기";
     return "신청 내용 확인하기";
   }
 
+  function setRegistrationStep(step, focus = false) {
+    const manual = registrationMode() === "manual_transfer";
+    const payment = manual && step === "payment";
+    state.registrationStep = payment ? "payment" : "info";
+    elements.infoStep.hidden = payment;
+    elements.bankTransferCard.hidden = !payment;
+    elements.backToInfo.hidden = !payment;
+    $(".form-progress").hidden = !manual;
+    ["info", "payment"].forEach(name => {
+      const item = $(`#progress-${name}`);
+      if (name === state.registrationStep) item.setAttribute("aria-current", "step");
+      else item.removeAttribute("aria-current");
+    });
+    if (payment) {
+      const data = formPayload();
+      setText("#transfer-review", `${data.fields.name} · ${data.fields.phone}`);
+      setText("#bank-depositor-name", data.fields.depositorName);
+    }
+    if (!elements.submit.disabled) elements.submit.textContent = submitLabelForMode();
+    if (focus) $(payment ? "#bank-transfer-title" : "#info-step-title").focus();
+  }
+
+  function renderReceipt(registrationId = "") {
+    const manual = registrationMode() === "manual_transfer";
+    const saved = manual ? rememberedRegistration(state.event.id) : null;
+    const id = registrationId || saved?.registrationId || "";
+    elements.receipt.hidden = !id;
+    if (id) {
+      setText("#receipt-registration-id", id);
+      state.lastRegistrationId = id;
+      elements.form.hidden = true;
+    }
+  }
+
   function selectEvent(eventId, updateUrl = false) {
+    if (state.submitting) return;
     const selected = config.events.find((event) => event.id === eventId);
     if (!selected) return;
 
@@ -975,7 +1027,7 @@
 
     wrapper.append(label, control);
 
-    if (field.maxLength) {
+    if (field.maxLength && field.type === "textarea") {
       const counter = document.createElement("span");
       counter.className = "field__count";
       counter.textContent = `0/${field.maxLength}`;
@@ -1001,7 +1053,7 @@
   }
 
   function validationMessage(control) {
-    if (control.validity.valueMissing) return "필수 항목을 입력해 주세요.";
+    if (control.validity.valueMissing || (control.required && !control.value.trim())) return "필수 항목을 입력해 주세요.";
     if (control.validity.typeMismatch) return "형식에 맞게 입력해 주세요.";
     if (control.validity.patternMismatch) return "전화번호 형식을 확인해 주세요.";
     if (control.validity.tooLong) return `최대 ${control.maxLength}자까지 입력할 수 있습니다.`;
@@ -1009,7 +1061,7 @@
   }
 
   function validateControl(control, errorElement) {
-    const isValid = control.checkValidity();
+    const isValid = control.checkValidity() && (!control.required || Boolean(control.value.trim()));
     control.setAttribute("aria-invalid", String(!isValid));
     errorElement.textContent = isValid ? "" : validationMessage(control);
     return isValid;
@@ -1029,22 +1081,21 @@
       if (!validateControl(control, error)) valid = false;
     });
 
+    const phone = elements.form.elements.phone;
+    if (registrationMode() === "manual_transfer" && !/^01\d{8,9}$/.test(phoneDigits(phone.value))) {
+      valid = false;
+      phone.setAttribute("aria-invalid", "true");
+      setText("#error-phone", "010으로 시작하는 휴대전화 번호를 확인해 주세요.");
+    }
     const privacy = $('input[name="privacyConsent"]', elements.form);
     if (!privacy.checked) {
       valid = false;
       showStatus("개인정보 수집·이용 필수 동의를 확인해 주세요.");
     }
 
-    if (registrationMode() === "manual_transfer" && !elements.paymentSent.checked) {
-      valid = false;
-      showStatus("참가비를 송금한 뒤 입금 완료 항목을 확인해 주세요.");
-    }
-
     if (!valid) {
-      const firstInvalid = $('[aria-invalid="true"]', elements.form)
-        || (registrationMode() === "manual_transfer" && !elements.paymentSent.checked
-          ? elements.paymentSent
-          : privacy);
+      if (state.registrationStep === "payment") setRegistrationStep("info");
+      const firstInvalid = $('[aria-invalid="true"]', elements.form) || privacy;
       firstInvalid.focus();
     }
 
@@ -1063,7 +1114,7 @@
       fields,
       consents: {
         privacy: data.get("privacyConsent") === "on",
-        paymentReported: data.get("paymentSent") === "on",
+        paymentReported: registrationMode() === "manual_transfer" && state.registrationStep === "payment",
       },
       client: {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -1089,6 +1140,14 @@
     }
 
     if (!validateForm()) return;
+    if (mode === "manual_transfer" && state.registrationStep === "info") {
+      if (!bankTransferReady()) {
+        showStatus("참여신청을 준비하고 있어요. 잠시 후 다시 확인해 주세요.");
+        return;
+      }
+      setRegistrationStep("payment", true);
+      return;
+    }
     const payload = formPayload();
 
     if (valueFromForm(elements.form, "company")) {
@@ -1123,19 +1182,25 @@
         return;
       }
 
+      const selectedEvent = clone(state.event);
       state.submitting = true;
-      elements.submit.disabled = true;
-      elements.submit.textContent = "입금 확인 요청을 저장하는 중…";
+      elements.form.setAttribute("aria-busy", "true");
+      $$("input, button", elements.form).forEach(control => { control.disabled = true; });
+      $$("button", elements.quarterTabs).forEach(control => { control.disabled = true; });
+      elements.submit.textContent = "참여신청을 마무리하는 중…";
 
       try {
-        const registrationId = await createManualTransferRegistration(payload);
+        const registrationId = await createManualTransferRegistration(payload, selectedEvent);
         elements.form.reset();
         showManualTransferResult(payload, registrationId);
+        renderReceipt(registrationId);
       } catch (_error) {
-        showStatus("신청을 저장하지 못했습니다. 입력 내용은 접수된 것으로 간주하지 말고 잠시 뒤 다시 시도해 주세요.");
+        showStatus("신청 완료를 확인하지 못했어요. 입력한 내용은 유지됩니다. 다시 입금하지 말고 연결 상태를 확인한 뒤 재시도해 주세요.");
       } finally {
         state.submitting = false;
-        elements.submit.disabled = false;
+        elements.form.removeAttribute("aria-busy");
+        $$("input, button", elements.form).forEach(control => { control.disabled = false; });
+        $$("button", elements.quarterTabs).forEach(control => { control.disabled = false; });
         elements.submit.textContent = submitLabelForMode();
       }
       return;
@@ -1191,16 +1256,16 @@
   function showManualTransferResult(payload, registrationId) {
     state.lastRegistrationId = registrationId;
     setText("#result-eyebrow", "REGISTRATION RECEIVED");
-    setText("#result-title", "입금확인 요청을 접수했습니다.");
+    setText("#result-title", "참여신청이 완료됐어요.");
     setText(
       "#result-copy",
-      "아직 참여 확정 상태는 아닙니다. 운영자가 실제 입금자명과 금액을 확인한 뒤 확정하며, 아래 신청번호는 취소·환불 요청에 필요합니다.",
+      "신청이 잘 접수됐어요. 운영자가 입금 내역을 확인한 뒤 참여 확정과 장소를 입력한 연락처로 안내합니다. 취소·환불에 필요한 신청번호를 저장해 주세요.",
     );
     renderResultRows([
       ["회차", state.event.quarter],
       ["신청자", payload.fields.name || "—"],
       ["입금자명", payload.fields.depositorName || "—"],
-      ["현재 상태", "입금확인 대기"],
+      ["현재 상태", "신청 접수 완료 · 입금 확인 중"],
       ["신청번호", registrationId],
     ]);
     elements.copyRegistrationId.hidden = false;
@@ -1385,10 +1450,29 @@
   }
 
   function initializeEvents() {
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(entries => {
+        document.body.classList.toggle("applying", entries[0].isIntersecting);
+      }, { threshold: 0 }).observe($("#apply"));
+    }
     elements.form.addEventListener("submit", handleSubmit);
+    elements.backToInfo.addEventListener("click", () => {
+      if (state.submitting) return;
+      hideStatus();
+      setRegistrationStep("info", true);
+    });
+    elements.copyReceiptId.addEventListener("click", () => {
+      copyText(elements.copyReceiptId, state.lastRegistrationId, "신청번호를 복사했어요");
+    });
+    $("#new-registration").addEventListener("click", () => {
+      try { window.localStorage.removeItem(registrationStorageKey(state.event.id)); } catch (_error) {}
+      state.lastRegistrationId = "";
+      selectEvent(state.event.id);
+      $("#info-step-title").focus();
+    });
     elements.refundForm.addEventListener("submit", submitRefundRequest);
     elements.copyBankAccount.addEventListener("click", () => {
-      copyText(elements.copyBankAccount, bankTransferDetails().accountNumber, "계좌번호를 복사했습니다");
+      copyText(elements.copyBankAccount, bankTransferDetails().accountNumber.replace(/\D/g, ""), "계좌번호만 복사했어요");
     });
     elements.copyRegistrationId.addEventListener("click", () => {
       copyText(elements.copyRegistrationId, state.lastRegistrationId, "신청번호를 복사했습니다");

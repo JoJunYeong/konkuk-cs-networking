@@ -238,12 +238,11 @@ window.NETWORKING_SITE_CONFIG = {
       quote: "선후배끼리 얼굴 한 번 보고, 다음에 연락할 수 있으면 충분합니다.",
       programDescription: "퇴근하거나 수업을 마치고 오는 시간을 생각해, 늦게 도착해도 합류할 수 있게 진행합니다.",
       agenda: [
-        { time: "19:00", title: "도착·이름표 받기", description: "도착하는 순서대로 이름표를 받고 간단히 식사합니다." },
-        { time: "19:30", title: "모임 안내", description: "오늘 순서와 참석자를 짧게 소개합니다." },
-        { time: "19:40", title: "선배 세 사람 이야기", description: "회사, 연구, 창업 현장에서 겪은 일을 듣습니다." },
-        { time: "20:20", title: "주제별 대화", description: "커리어, 기술, 창업 등 관심 있는 테이블에서 이야기합니다." },
-        { time: "21:30", title: "자유 대화", description: "자리를 옮겨 더 이야기하거나 먼저 귀가해도 됩니다." },
-        { time: "22:00", title: "마무리", description: "다음 모임에서 듣고 싶은 주제를 받고 마칩니다." },
+        { time: "19:00", title: "도착 및 시작", description: "도착하는 순서대로 스터디룸 자리에 랜덤으로 착석합니다." },
+        { time: "19:10", title: "자기소개", description: "한 명씩 본인을 소개합니다." },
+        { time: "19:30", title: "선배 이야기", description: "회사, 연구, 창업 현장에서 겪은 일을 듣습니다." },
+        { time: "20:30", title: "장소 변경 및 자유 대화", description: "" },
+        { time: "22:00", title: "마무리", description: "" },
       ],
     },
     {

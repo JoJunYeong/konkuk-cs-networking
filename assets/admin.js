@@ -239,6 +239,11 @@ async function writeEventsAndGates(events) {
       throw new Error("다른 창에서 행사 설정을 변경했습니다. 새로고침으로 최신 내용을 확인한 뒤 저장해 주세요.");
     }
     const previousEvents = previousPayload ? JSON.parse(previousPayload) : [];
+    const newStats = await Promise.all(events.filter(event => !previousEvents.some(previous => previous.id === event.id))
+      .map(event => transaction.get(doc(db, "registrationStats", event.id))));
+    newStats.filter(snapshot => !snapshot.exists()).forEach(snapshot => {
+      transaction.set(snapshot.ref, { count: 0, updatedAt: serverTimestamp() });
+    });
     transaction.set(documentRef("events"), { payload: serialized, updatedAt: serverTimestamp(), updatedBy: runtime.adminUsername });
     events.forEach((event) => {
       const mode = eventRegistrationMode(event);
@@ -1163,6 +1168,12 @@ async function resolveRefund(registrationId, outcome) {
       const [latestRegistration, latestRefund] = await Promise.all([transaction.get(registrationRef), transaction.get(refundRef)]);
       if (!latestRegistration.exists() || latestRefund.data()?.status !== "refund_requested" || latestRefund.data()?.refundAccount !== refund.refundAccount) {
         throw new Error("환불 요청이 변경되었습니다. 명단을 새로고침한 뒤 다시 확인해 주세요.");
+      }
+      const statsRef = doc(db, "registrationStats", latestRegistration.data().eventId);
+      const stats = await transaction.get(statsRef);
+      if (stats.exists() && ["payment_reported", "confirmed"].includes(latestRegistration.data().status)) {
+        if (!Number.isInteger(stats.data().count) || stats.data().count < 1) throw new Error("신청 인원 집계를 확인한 뒤 다시 시도해 주세요.");
+        transaction.update(statsRef, { count: stats.data().count - 1, updatedAt: serverTimestamp() });
       }
       transaction.update(registrationRef, {
       status: completed ? "refund_completed" : "canceled_unpaid",

@@ -60,7 +60,7 @@ async function seedGate(accepting, deadline = { nullValue: null }, amounts) {
   });
 }
 
-async function createRegistration(id, overrides = {}) {
+function registrationWrites(id, overrides = {}) {
   const values = {
     eventId: "2026-Q3",
     eventQuarter: "2026 Q3",
@@ -93,14 +93,15 @@ async function createRegistration(id, overrides = {}) {
     source: stringValue(values.source),
     ...(values.participantType === undefined ? {} : { participantType: stringValue(values.participantType) }),
   };
-  return request(":commit", {
-    method: "POST",
-    body: JSON.stringify({
-      writes: [{
+  return [{
         update: { name: documentName(`registrations/${id}`), fields },
         updateTransforms: [{ fieldPath: "createdAt", setToServerValue: "REQUEST_TIME" }],
-      }],
-    }),
+      }];
+}
+
+async function createRegistration(id, overrides = {}) {
+  return request(":commit", {
+    method: "POST", body: JSON.stringify({ writes: registrationWrites(id, overrides) }),
   });
 }
 
@@ -211,4 +212,48 @@ if (existing.status !== 200 || existingData.fields.amount.integerValue !== "2000
 console.log("PASS existing participant category and submitted amount remain unchanged");
 await expectStatus("existing graduate refund still works", await createRefund(feeId(36)), 200);
 
+const adminHeaders = { authorization: `Bearer ${emulatorToken("uk5noSfHHMU3y9l7CPkG5F0YRl33")}` };
+const countedId = n => `cc${String(n).padStart(30, "0")}`;
+const timestampTransform = [{ fieldPath: "updatedAt", setToServerValue: "REQUEST_TIME" }];
+const countWrites = (id, delta = 1, eventId = "2026-Q3") => [
+  { update: { name: documentName(`registrationCountUpdates/${eventId}`), fields: { registrationId: stringValue(id) } }, updateTransforms: timestampTransform },
+  { transform: { document: documentName(`registrationStats/${eventId}`), fieldTransforms: [{ fieldPath: "count", increment: integerValue(delta) }, ...timestampTransform] } },
+];
+const commit = (writes, headers) => request(":commit", { method: "POST", headers, body: JSON.stringify({ writes }) });
+const countedWrites = id => [...registrationWrites(id, { participantType: "student", amount: 5000 }), ...countWrites(id)];
+const readCount = async () => {
+  const response = await request("/registrationStats/2026-Q3");
+  if (!response.ok) throw new Error("Public count unavailable");
+  const data = await response.json();
+  if (Object.keys(data.fields).sort().join(",") !== "count,updatedAt") throw new Error("Unexpected public fields");
+  return Number(data.fields.count.integerValue);
+};
+await expectStatus("restore current Q3 fees", await seedGate(true, { nullValue: null }, { student: 5000, graduate: 10000 }), 200);
+await expectStatus("admin initializes public count", await commit([{ update: { name: documentName("registrationStats/2026-Q3"), fields: { count: integerValue(7) } }, updateTransforms: timestampTransform }], adminHeaders), 200);
+if (await readCount() !== 7) throw new Error("Wrong seeded count");
+await expectStatus("registration requires matching count", await createRegistration(countedId(1), { participantType: "student", amount: 5000 }), 403);
+await expectStatus("atomic registration and count succeed", await commit(countedWrites(countedId(1))), 200);
+if (await readCount() !== 8) throw new Error("Registration was not counted once");
+await expectStatus("count marker stays private", await request("/registrationCountUpdates/2026-Q3"), 403);
+await expectStatus("count cannot be incremented without registration", await commit(countWrites(countedId(2))), 403);
+await expectStatus("old registration cannot increment again", await commit(countWrites(countedId(1))), 403);
+await expectStatus("registration cannot inflate count by two", await commit([...registrationWrites(countedId(2), { participantType: "student", amount: 5000 }), ...countWrites(countedId(2), 2)]), 403);
+await expectStatus("wrong event count rejected", await commit([...registrationWrites(countedId(2), { participantType: "student", amount: 5000 }), ...countWrites(countedId(2), 1, "2026-Q4")]), 403);
+await expectStatus("two registrations cannot share one increment", await commit([...countedWrites(countedId(2)), ...registrationWrites(countedId(3), { participantType: "student", amount: 5000 })]), 403);
+await expectStatus("public cannot inject personal information", await commit([{ update: { name: documentName("registrationStats/2026-Q3"), fields: { count: integerValue(9), name: stringValue("private") } }, updateTransforms: timestampTransform }]), 403);
+await expectStatus("public cannot delete count", await request("/registrationStats/2026-Q3", { method: "DELETE" }), 403);
+if (await readCount() !== 8) throw new Error("Rejected operations changed the count");
+const concurrent = await Promise.all([commit(countedWrites(countedId(4))), commit(countedWrites(countedId(5)))]);
+for (const [i, response] of concurrent.entries()) await expectStatus(`concurrent submission ${i + 1}`, response, 200);
+if (await readCount() !== 10) throw new Error("Concurrent submissions lost an increment");
+const statusWrite = (id, status) => ({ update: { name: documentName(`registrations/${id}`), fields: { status: stringValue(status) } }, updateMask: { fieldPaths: ["status"] } });
+const decrement = { transform: { document: documentName("registrationStats/2026-Q3"), fieldTransforms: [{ fieldPath: "count", increment: integerValue(-1) }, ...timestampTransform] } };
+await expectStatus("confirm preserves active count", await commit([statusWrite(countedId(1), "confirmed")], adminHeaders), 200);
+await expectStatus("refund completion must decrease count", await commit([statusWrite(countedId(1), "refund_completed")], adminHeaders), 403);
+await expectStatus("refund completion and count update succeed", await commit([statusWrite(countedId(1), "refund_completed"), decrement], adminHeaders), 200);
+await expectStatus("unpaid cancellation decreases count", await commit([statusWrite(countedId(4), "canceled_unpaid"), decrement], adminHeaders), 200);
+if (await readCount() !== 8) throw new Error("Inactive registrations were not excluded");
+await expectStatus("active deletion must decrease count", await commit([{ delete: documentName(`registrations/${countedId(5)}`) }], adminHeaders), 403);
+await expectStatus("active deletion and count update succeed", await commit([{ delete: documentName(`registrations/${countedId(5)}`) }, decrement], adminHeaders), 200);
+if (await readCount() !== 7) throw new Error("Deletion count mismatch");
 console.log("All Firestore rule checks passed.");

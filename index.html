@@ -35,12 +35,12 @@
     <link rel="canonical" href="https://jojunyeong.github.io/konkuk-cs-networking/" />
     <title>건국 컴공 네트워킹 · KU meet</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260907-copy" />
-    <script src="./config/site.config.js?v=20260907-fees"></script>
+    <link rel="stylesheet" href="./assets/styles.css?v=20260908-countdown" />
+    <script src="./config/site.config.js?v=20260908-countdown"></script>
     <script src="./config/firebase.config.js?v=20260907-meet"></script>
-    <script src="./assets/registration-time.js?v=20260907-admin"></script>
+    <script src="./assets/registration-time.js?v=20260908-countdown"></script>
     <script src="./assets/registration-fees.js?v=20260907-fees"></script>
-    <script defer src="./assets/app.js?v=20260907-fees"></script>
+    <script defer src="./assets/app.js?v=20260908-countdown"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
@@ -98,13 +98,27 @@
               건국대학교 컴퓨터공학과 선후배 모임입니다.
             </p>
 
+            <section class="registration-highlight" aria-label="접수 현황">
+              <div class="deadline-card" id="registration-deadline">
+                <span class="registration-highlight__label">접수 마감</span>
+                <strong class="deadline-card__badge" id="deadline-dday">일정 확인 중</strong>
+                <p id="deadline-countdown" role="timer" aria-live="off"></p>
+                <p class="deadline-card__date"><time id="deadline-date"></time><span>한국 시간</span></p>
+              </div>
+              <div class="registration-count-card" id="registration-count-card">
+                <span class="registration-highlight__label">현재 신청</span>
+                <p class="registration-count-card__number" aria-live="polite" aria-atomic="true"><strong id="registration-count">—</strong><span>명</span></p>
+                <p id="registration-count-capacity"></p>
+                <p class="registration-count-card__note" id="registration-count-note">신청 인원 확인 중</p>
+              </div>
+            </section>
+
             <div class="hero__actions">
               <a class="button button--accent" id="primary-cta" href="#apply">참여신청하기</a>
               <button class="button button--line" id="share-button" type="button">링크 공유</button>
             </div>
 
             <p class="hero__notice" id="hero-notice" hidden></p>
-            <p class="hero__notice" id="registration-deadline" hidden></p>
           </div>
 
           <aside class="event-ticket" aria-label="이번 분기 행사 정보">
@@ -230,7 +244,11 @@
               </div>
               <div>
                 <dt>접수 마감</dt>
-                <dd id="summary-registration-deadline">—</dd>
+                <dd id="summary-registration-deadline"><strong class="deadline-inline" id="summary-deadline-dday"></strong><time id="summary-deadline-date">—</time></dd>
+              </div>
+              <div id="summary-count-row">
+                <dt>현재 신청</dt>
+                <dd id="summary-registration-count">확인 중</dd>
               </div>
             </dl>
 

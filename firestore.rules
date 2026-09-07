@@ -23,6 +23,47 @@ service cloud.firestore {
       return /databases/$(database)/documents/registrations/$(registrationId);
     }
 
+    function statsPath(eventId) {
+      return /databases/$(database)/documents/registrationStats/$(eventId);
+    }
+
+    function countUpdatePath(eventId) {
+      return /databases/$(database)/documents/registrationCountUpdates/$(eventId);
+    }
+
+    function validStats(data) {
+      return data.keys().hasAll(['count', 'updatedAt'])
+        && data.keys().hasOnly(['count', 'updatedAt'])
+        && data.count is int && data.count >= 0
+        && data.updatedAt == request.time;
+    }
+
+    function countIncreased(eventId) {
+      return exists(statsPath(eventId))
+        && getAfter(statsPath(eventId)).data.count == get(statsPath(eventId)).data.count + 1
+        && getAfter(statsPath(eventId)).data.updatedAt == request.time;
+    }
+
+    function newRegistrationCounted(eventId, registrationId) {
+      return validRegistrationId(registrationId)
+        && !exists(registrationPath(registrationId))
+        && getAfter(registrationPath(registrationId)).data.eventId == eventId
+        && getAfter(registrationPath(registrationId)).data.status == 'payment_reported'
+        && getAfter(countUpdatePath(eventId)).data.registrationId == registrationId
+        && getAfter(countUpdatePath(eventId)).data.updatedAt == request.time
+        && countIncreased(eventId);
+    }
+
+    function activeRegistration(data) {
+      return data.status in ['payment_reported', 'confirmed'];
+    }
+
+    function countAdjusted(eventId, delta) {
+      return !exists(statsPath(eventId))
+        || (getAfter(statsPath(eventId)).data.count == get(statsPath(eventId)).data.count + delta
+          && getAfter(statsPath(eventId)).data.updatedAt == request.time);
+    }
+
     function validFee(amount) {
       return amount is int && amount > 0 && amount <= 1000000;
     }
@@ -98,6 +139,25 @@ service cloud.firestore {
         && (!resource.data.keys().hasAny(['paymentAmounts']) || request.resource.data.keys().hasAll(['paymentAmounts']));
     }
 
+    // 공개 문서에는 인원과 갱신 시각만 저장하며 신청번호나 개인정보를 넣지 않습니다.
+    match /registrationStats/{eventId} {
+      allow get: if eventId.matches('^[0-9]{4}-Q[1-4]$');
+      allow list: if isAdmin();
+      allow create: if isAdmin() && validStats(request.resource.data);
+      allow update: if validStats(request.resource.data)
+        && (isAdmin() || newRegistrationCounted(eventId, getAfter(countUpdatePath(eventId)).data.registrationId));
+      allow delete: if false;
+    }
+
+    // 신청과 집계의 원자적 갱신을 증명하는 비공개 문서입니다.
+    match /registrationCountUpdates/{eventId} {
+      allow read: if isAdmin();
+      allow create, update: if request.resource.data.keys().hasAll(['registrationId', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['registrationId', 'updatedAt'])
+        && newRegistrationCounted(eventId, request.resource.data.registrationId);
+      allow delete: if isAdmin();
+    }
+
     match /registrations/{registrationId} {
       allow create: if validRegistrationId(registrationId)
         && request.resource.data.keys().hasOnly([
@@ -122,8 +182,16 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.clientTimezone is string
         && request.resource.data.clientTimezone.size() <= 80
-        && request.resource.data.source == 'public_web';
-      allow read, update, delete: if isAdmin();
+        && request.resource.data.source == 'public_web'
+        && (!exists(statsPath(request.resource.data.eventId))
+          || newRegistrationCounted(request.resource.data.eventId, registrationId));
+      allow read: if isAdmin();
+      allow update: if isAdmin()
+        && request.resource.data.eventId == resource.data.eventId
+        && (activeRegistration(resource.data) == activeRegistration(request.resource.data)
+          || countAdjusted(resource.data.eventId, activeRegistration(request.resource.data) ? 1 : -1));
+      allow delete: if isAdmin()
+        && (!activeRegistration(resource.data) || countAdjusted(resource.data.eventId, -1));
     }
 
     match /refundRequests/{registrationId} {

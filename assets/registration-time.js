@@ -38,5 +38,27 @@
     return input ? input.replaceAll("-", ".").replace("T", " ") : "마감일 없음";
   }
 
-  window.KURegistrationTime = Object.freeze({ deadlineMillis, deadlinePassed, effectiveStatus, toInputValue, fromInputValue, formatDeadline });
+  function countdown(event, now = Date.now()) {
+    const deadline = deadlineMillis(event?.registrationDeadline);
+    if (effectiveStatus(event, now) === "closed") {
+      return { badge: "접수 마감", remaining: "신청 접수가 종료되었습니다", tone: "closed" };
+    }
+    if (deadline === null || !Number.isFinite(deadline) || event?.status !== "open") {
+      return { badge: event?.status === "open" ? "접수 중" : "오픈 예정", remaining: "접수 일정을 확인해 주세요", tone: "neutral" };
+    }
+    // D-day는 접속 기기의 시간대와 무관하게 한국 달력의 날짜 차이로 계산합니다.
+    const day = 86400000;
+    const koreaOffset = 9 * 3600000;
+    const days = Math.floor((deadline + koreaOffset) / day) - Math.floor((now + koreaOffset) / day);
+    const seconds = Math.max(0, Math.ceil((deadline - now) / 1000));
+    const parts = [
+      Math.floor(seconds / 86400) ? `${Math.floor(seconds / 86400)}일` : "",
+      `${Math.floor(seconds / 3600) % 24}시간`,
+      `${Math.floor(seconds / 60) % 60}분`,
+      `${seconds % 60}초`,
+    ].filter(Boolean);
+    return { badge: days === 0 ? "D-DAY" : `D-${days}`, remaining: `${parts.join(" ")} 남음`, tone: days <= 1 ? "urgent" : "open" };
+  }
+
+  window.KURegistrationTime = Object.freeze({ deadlineMillis, deadlinePassed, effectiveStatus, toInputValue, fromInputValue, formatDeadline, countdown });
 })();

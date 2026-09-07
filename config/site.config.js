@@ -237,7 +237,7 @@ window.NETWORKING_SITE_CONFIG = {
       bankAccountNumber: "",
       paymentAmount: 0,
       paymentAmounts: { student: 5000, graduate: 10000 },
-      registrationDeadline: "2026-09-07T14:59:00.000Z",
+      registrationDeadline: "2026-09-14T14:59:00.000Z",
       refundDeadlineLabel: "2026년 9월 7일 23:59",
       locationNotice: "정확한 장소는 입금 확인 후 입력한 연락처로 안내합니다.",
       applicationLabel: "참여 신청하기",

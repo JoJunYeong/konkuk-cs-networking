@@ -34,7 +34,7 @@
   }
 
   const config = clone(sourceConfig);
-  const { deadlinePassed, effectiveStatus, formatDeadline } = window.KURegistrationTime;
+  const { deadlinePassed, effectiveStatus, formatDeadline, countdown } = window.KURegistrationTime;
   const { participantLabel, feesReady, participantAmount, feeSummary } = window.KURegistrationFees;
   const state = {
     event: null,
@@ -44,6 +44,8 @@
     registrationStep: "info",
     managedHistory: null,
     displayedRegistrationStatus: null,
+    countSubscription: null,
+    countGeneration: 0,
   };
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -222,6 +224,10 @@
           doc: firestoreModule.doc,
           serverTimestamp: firestoreModule.serverTimestamp,
           setDoc: firestoreModule.setDoc,
+          getDoc: firestoreModule.getDoc,
+          writeBatch: firestoreModule.writeBatch,
+          increment: firestoreModule.increment,
+          onSnapshot: firestoreModule.onSnapshot,
         };
       });
     }
@@ -301,7 +307,29 @@
       source: "public_web",
     };
 
-    await client.setDoc(client.doc(client.db, "registrations", registrationId), record);
+    const registrationRef = client.doc(client.db, "registrations", registrationId);
+    const statsRef = client.doc(client.db, "registrationStats", selectedEvent.id);
+    const saveWithCount = async () => {
+      const batch = client.writeBatch(client.db);
+      batch.set(registrationRef, record);
+      // 집계 갱신 증명은 비공개 문서에만 보관합니다. 공개 문서에는 인원만 저장합니다.
+      batch.set(client.doc(client.db, "registrationCountUpdates", selectedEvent.id), {
+        registrationId, updatedAt: client.serverTimestamp(),
+      });
+      batch.update(statsRef, { count: client.increment(1), updatedAt: client.serverTimestamp() });
+      await batch.commit();
+    };
+    if ((await client.getDoc(statsRef)).exists()) {
+      await saveWithCount();
+    } else {
+      try {
+        await client.setDoc(registrationRef, record);
+      } catch (error) {
+        // 집계가 활성화되는 순간에 구버전 경로로 제출한 경우 한 번만 재시도합니다.
+        if (error.code !== "permission-denied" || !(await client.getDoc(statsRef)).exists()) throw error;
+        await saveWithCount();
+      }
+    }
     rememberRegistration(selectedEvent.id, registrationId);
     return registrationId;
   }
@@ -738,6 +766,63 @@
     });
   }
 
+  function updateDeadlineContent() {
+    if (!state.event) return;
+    const display = countdown(state.event);
+    setText("#deadline-dday", display.badge);
+    setText("#deadline-countdown", display.remaining);
+    $("#registration-deadline").dataset.tone = display.tone;
+    setText("#deadline-date", formatDeadline(state.event.registrationDeadline));
+    setText("#summary-deadline-dday", display.badge);
+    setText("#summary-deadline-date", formatDeadline(state.event.registrationDeadline));
+    [$("#deadline-date"), $("#summary-deadline-date")].forEach((element) => {
+      if (state.event.registrationDeadline) element.setAttribute("datetime", state.event.registrationDeadline);
+      else element.removeAttribute("datetime");
+    });
+  }
+
+  async function watchRegistrationCount() {
+    const generation = ++state.countGeneration;
+    state.countSubscription?.();
+    state.countSubscription = null;
+    const event = state.event;
+    const manual = registrationMode(event) === "manual_transfer";
+    $("#registration-count-card").hidden = !manual;
+    $("#summary-count-row").hidden = !manual;
+    $(".registration-highlight").classList.toggle("registration-highlight--deadline-only", !manual);
+    setText("#registration-count", "—");
+    setText("#registration-count-capacity", `정원 ${event.capacity}명`);
+    setText("#summary-registration-count", "확인 중");
+    setText("#registration-count-note", "신청 인원 확인 중");
+    if (!manual) return;
+    const unavailable = () => {
+      if (generation !== state.countGeneration) return;
+      setText("#registration-count", "—");
+      setText("#summary-registration-count", "잠시 후 다시 확인해 주세요");
+      setText("#registration-count-note", "인원을 불러오지 못했습니다");
+    };
+    try {
+      const client = await firestoreClient();
+      if (generation !== state.countGeneration) return;
+      state.countSubscription = client.onSnapshot(client.doc(client.db, "registrationStats", event.id), { includeMetadataChanges: true }, (snapshot) => {
+        if (generation !== state.countGeneration) return;
+        const count = snapshot.data()?.count;
+        if (!snapshot.exists() || !Number.isInteger(count) || count < 0) {
+          unavailable();
+          return;
+        }
+        const number = count.toLocaleString("ko-KR");
+        setText("#registration-count", number);
+        setText("#summary-registration-count", `${number}명 / 정원 ${event.capacity}명${snapshot.metadata.fromCache ? " · 최근 확인 인원" : ""}`);
+        setText("#registration-count-note", snapshot.metadata.fromCache
+          ? "최근 확인 인원 · 연결 확인 중"
+          : "입금 확인 대기 포함 · 취소·환불 완료 제외");
+      }, unavailable);
+    } catch (_error) {
+      unavailable();
+    }
+  }
+
   function updateEventContent() {
     const event = state.event;
     const displayDate = [event.dateLabel, event.time].filter(Boolean).join(" · ");
@@ -769,8 +854,7 @@
     setText("#hero-description", event.description);
     setText("#hero-notice", event.notice);
     $("#hero-notice").hidden = !String(event.notice || "").trim();
-    setText("#registration-deadline", `접수 마감 · ${formatDeadline(event.registrationDeadline)} (한국 시간)`);
-    $("#registration-deadline").hidden = !event.registrationDeadline;
+    updateDeadlineContent();
     setText("#ticket-quarter", event.quarter);
     setText("#ticket-number", event.sequence);
     setText("#ticket-date", event.dateLabel);
@@ -792,7 +876,6 @@
     setText("#summary-date", displayDate);
     setText("#summary-venue", event.venue);
     setText("#summary-price", price);
-    setText("#summary-registration-deadline", formatDeadline(event.registrationDeadline));
     setText(
       "#location-note",
       event.locationNotice || "정확한 장소는 신청·결제 완료자에게 운영자가 별도로 안내합니다.",
@@ -937,7 +1020,9 @@
   }
 
   function refreshDeadline() {
-    if (!state.event || state.submitting || effectiveStatus(state.event) === state.displayedRegistrationStatus) return;
+    if (!state.event) return;
+    updateDeadlineContent();
+    if (state.submitting || effectiveStatus(state.event) === state.displayedRegistrationStatus) return;
     updateEventContent();
     if (deadlinePassed(state.event) && !rememberedRegistration(state.event.id)) {
       showStatus("접수가 마감되었습니다. 이미 입금했다면 운영자에게 문의해 주세요.");
@@ -992,6 +1077,7 @@
     elements.refundStatus.classList.remove("is-error");
     clearFieldErrors();
     updateEventContent();
+    watchRegistrationCount();
 
     if (updateUrl) {
       const url = new URL(window.location.href);

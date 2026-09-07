@@ -73,6 +73,33 @@ h1, h2, h3 { font-weight: 750; line-height: 1.35; letter-spacing: -.045em; text-
 .hero__actions { display: flex; justify-content: center; gap: 10px; }
 .hero__actions .button { min-width: 164px; }
 .hero__notice { margin-top: 17px; color: #748379; font-size: 11px; }
+.registration-highlight { display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; max-width: 640px; margin: 26px auto; text-align: center; }
+.registration-highlight.registration-highlight--deadline-only { grid-template-columns: 1fr; max-width: 400px; }
+.deadline-card, .registration-count-card { min-width: 0; padding: 20px 18px; border: 1px solid #bbddcc; border-radius: 18px; background: #e7f7ef; }
+.registration-highlight__label { display: block; color: var(--forest); font-size: 13px; font-weight: 700; }
+.deadline-card__badge { display: block; margin: 3px 0; color: var(--forest); font-size: clamp(32px, 4vw, 46px); font-weight: 850; line-height: 1.25; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+#deadline-countdown { min-height: 24px; color: var(--forest); font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.deadline-card__date { display: flex; justify-content: center; flex-wrap: wrap; gap: 3px 7px; margin-top: 9px; color: #496657; font-size: 12px; }
+.deadline-card__date span { white-space: nowrap; }
+.deadline-card[data-tone="urgent"] { border-color: #e5b97f; background: #fff3df; }
+.deadline-card[data-tone="urgent"] .deadline-card__badge { color: #9b480a; }
+.deadline-card[data-tone="closed"], .deadline-card[data-tone="neutral"] { border-color: var(--line); background: #f0f4f1; }
+.registration-count-card { border-color: var(--line); background: #fff; }
+.registration-count-card__number { display: flex; align-items: baseline; justify-content: center; gap: 5px; margin: 3px 0; color: var(--forest); }
+.registration-count-card__number strong { font-size: clamp(32px, 4vw, 46px); font-weight: 850; line-height: 1.25; font-variant-numeric: tabular-nums; }
+.registration-count-card__number span { font-size: 17px; font-weight: 650; }
+#registration-count-capacity { color: var(--muted); font-size: 13px; }
+.registration-count-card__note { margin-top: 9px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.deadline-inline { display: inline-block; margin-right: 7px; padding: 1px 7px; border-radius: 5px; color: var(--forest); background: #dff1e7; font-size: 12px; white-space: nowrap; }
+#summary-registration-deadline { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 0; }
+@media (max-width: 540px) {
+  .registration-highlight { grid-template-columns: 1.2fr 1fr; gap: 10px; margin: 22px auto; }
+  .deadline-card, .registration-count-card { padding: 16px 10px; border-radius: 15px; }
+  .registration-highlight__label { font-size: 12px; }
+  #deadline-countdown { font-size: 12px; min-height: 40px; display: grid; place-items: center; }
+  #registration-count-capacity { min-height: 40px; display: grid; place-items: center; }
+  .deadline-card__date { font-size: 11px; }
+}
 .event-ticket { position: relative; width: min(850px, 100%); margin: 38px auto 0; padding: 20px 28px 16px; border: 1px solid var(--line); border-radius: 22px; background: #ffffffd9; box-shadow: 0 12px 34px #183c2910; }
 .event-ticket__topline { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--muted); font-size: 10px; }
 .event-ticket__topline span:first-child { color: var(--accent); font-weight: 800; }

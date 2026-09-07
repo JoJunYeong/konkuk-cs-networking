@@ -8,10 +8,11 @@
     <title>관리자 · KU meet</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./assets/admin.css?v=20260907-quarter-copy" />
-    <script src="./config/site.config.js?v=20260907-admin"></script>
+    <script src="./config/site.config.js?v=20260907-fees"></script>
     <script src="./config/firebase.config.js?v=20260907-meet"></script>
     <script src="./assets/registration-time.js?v=20260907-admin"></script>
-    <script type="module" src="./assets/admin.js?v=20260907-quarter-copy"></script>
+    <script src="./assets/registration-fees.js?v=20260907-fees"></script>
+    <script type="module" src="./assets/admin.js?v=20260907-fees"></script>
   </head>
   <body>
     <a class="skip-link" href="#admin-main">본문으로 건너뛰기</a>
@@ -97,7 +98,8 @@
                   <label><span>신청 방식</span><select name="registrationMode"><option value="manual_transfer">계좌이체</option><option value="external">외부 신청 페이지</option></select></label>
                   <div data-registration-mode-fields="manual_transfer">
                     <div class="form-grid form-grid--two">
-                      <label><span>참가비 (원)</span><input name="paymentAmount" type="number" min="1" max="1000000" step="1" /></label>
+                      <label><span>재학생 참가비 (원)</span><input name="studentPaymentAmount" type="number" min="1" max="1000000" step="1" /></label>
+                      <label><span>졸업생 참가비 (원)</span><input name="graduatePaymentAmount" type="number" min="1" max="1000000" step="1" /></label>
                       <label><span>은행</span><input name="bankName" maxlength="30" placeholder="하나은행" /></label>
                       <label><span>계좌번호</span><input name="bankAccountNumber" maxlength="30" inputmode="numeric" autocomplete="off" /></label>
                       <label><span>예금주</span><input name="bankAccountHolder" maxlength="40" /></label>

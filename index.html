@@ -13,12 +13,12 @@
     <meta property="og:title" content="2026 Q3 건국대 컴공 선후배 네트워킹 데이" />
     <meta
       property="og:description"
-      content="9월 17일(목) 19:00 · 홍대입구 인근 · 참가비 10,000원 · 정원 100명"
+      content="9월 17일(목) 19:00 · 홍대입구 인근 · 재학생 5,000원 · 졸업생 10,000원 · 정원 100명"
     />
     <meta property="og:url" content="https://jojunyeong.github.io/konkuk-cs-networking/" />
     <meta
       property="og:image"
-      content="https://jojunyeong.github.io/konkuk-cs-networking/assets/event-2026-q3.png?v=20260907-copy"
+      content="https://jojunyeong.github.io/konkuk-cs-networking/assets/event-2026-q3.png?v=20260907-fees"
     />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -26,20 +26,21 @@
     <meta name="twitter:title" content="2026 Q3 건국대 컴공 선후배 네트워킹 데이" />
     <meta
       name="twitter:description"
-      content="9월 17일(목) 19:00 · 홍대입구 인근 · 참가비 10,000원 · 정원 100명"
+      content="9월 17일(목) 19:00 · 홍대입구 인근 · 재학생 5,000원 · 졸업생 10,000원 · 정원 100명"
     />
     <meta
       name="twitter:image"
-      content="https://jojunyeong.github.io/konkuk-cs-networking/assets/event-2026-q3.png?v=20260907-copy"
+      content="https://jojunyeong.github.io/konkuk-cs-networking/assets/event-2026-q3.png?v=20260907-fees"
     />
     <link rel="canonical" href="https://jojunyeong.github.io/konkuk-cs-networking/" />
     <title>건국 컴공 네트워킹 · KU meet</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./assets/styles.css?v=20260907-copy" />
-    <script src="./config/site.config.js?v=20260907-admin"></script>
+    <script src="./config/site.config.js?v=20260907-fees"></script>
     <script src="./config/firebase.config.js?v=20260907-meet"></script>
     <script src="./assets/registration-time.js?v=20260907-admin"></script>
-    <script defer src="./assets/app.js?v=20260907-admin"></script>
+    <script src="./assets/registration-fees.js?v=20260907-fees"></script>
+    <script defer src="./assets/app.js?v=20260907-fees"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
@@ -127,7 +128,7 @@
               </div>
               <div>
                 <span>참가비</span>
-                <strong id="ticket-price">10,000원</strong>
+                <strong id="ticket-price">재학생 5,000원 · 졸업생 10,000원</strong>
               </div>
             </div>
             <div class="event-ticket__footer">
@@ -144,7 +145,7 @@
             <strong>신청 방법</strong>
           </div>
           <ol class="registration-path__steps">
-            <li><span>1</span><strong id="flow-info-title">신청자 정보</strong><small>이름 · 휴대전화 · 입금자명</small></li>
+            <li><span>1</span><strong id="flow-info-title">신청자 정보</strong><small>이름 · 연락처 · 참가 구분</small></li>
             <li><span>2</span><strong id="flow-payment-title">참가비 입금</strong><small id="flow-payment-copy">안내된 계좌로 직접 송금</small></li>
             <li><span>3</span><strong id="flow-notice-title">입금완료 버튼</strong><small id="flow-notice-copy">입금 내역은 운영자가 확인합니다.</small></li>
           </ol>
@@ -225,7 +226,7 @@
               </div>
               <div>
                 <dt>참가비</dt>
-                <dd id="summary-price">10,000원</dd>
+                <dd id="summary-price">재학생 5,000원 · 졸업생 10,000원</dd>
               </div>
               <div>
                 <dt>접수 마감</dt>
@@ -304,7 +305,8 @@
                 <div class="transfer-review" id="transfer-review"></div>
                 <p class="transfer-instruction">아래 계좌로 입금한 뒤 <strong>입금완료</strong> 버튼을 눌러주세요.</p>
                 <dl class="bank-transfer-details">
-                  <div class="bank-amount"><dt>보내실 금액</dt><dd id="bank-transfer-amount">—</dd></div>
+                  <div class="bank-amount"><dt>보내실 금액</dt><dd id="bank-transfer-amount" aria-live="polite">—</dd></div>
+                  <div><dt>참가 구분</dt><dd id="bank-participant-type">—</dd></div>
                   <div><dt>은행</dt><dd id="bank-name">—</dd></div>
                   <div><dt>계좌번호</dt><dd id="bank-account-number">—</dd></div>
                   <div><dt>예금주</dt><dd id="bank-account-holder">—</dd></div>

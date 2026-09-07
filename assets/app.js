@@ -35,6 +35,7 @@
 
   const config = clone(sourceConfig);
   const { deadlinePassed, effectiveStatus, formatDeadline } = window.KURegistrationTime;
+  const { participantLabel, feesReady, participantAmount, feeSummary } = window.KURegistrationFees;
   const state = {
     event: null,
     submitting: false,
@@ -122,13 +123,12 @@
       : "preview";
   }
 
-  function bankTransferDetails(event = state.event) {
-    const amount = Number(event?.paymentAmount);
+  function bankTransferDetails(event = state.event, participantType = valueFromForm(elements.form, "participantType")) {
     return {
       bankName: String(event?.bankName || "").trim(),
       accountHolder: String(event?.bankAccountHolder || "").trim(),
       accountNumber: String(event?.bankAccountNumber || "").trim(),
-      amount: Number.isInteger(amount) && amount > 0 ? amount : 0,
+      amount: participantAmount(event, participantType),
       refundDeadlineLabel: String(event?.refundDeadlineLabel || "").trim(),
     };
   }
@@ -139,7 +139,7 @@
       details.bankName &&
       details.accountHolder &&
       details.accountNumber &&
-      details.amount > 0,
+      feesReady(event),
     );
   }
 
@@ -275,7 +275,9 @@
   }
 
   async function createManualTransferRegistration(payload, selectedEvent) {
-    const details = bankTransferDetails(selectedEvent);
+    const participantType = payload.fields.participantType;
+    const details = bankTransferDetails(selectedEvent, participantType);
+    if (!participantLabel(participantType) || !details.amount) throw new Error("participant_fee_invalid");
     const digits = phoneDigits(payload.fields.phone);
     if (!/^01\d{8,9}$/.test(digits)) throw new Error("phone_invalid");
 
@@ -289,10 +291,11 @@
       phone: payload.fields.phone.slice(0, 24),
       phoneDigits: digits,
       depositorName: payload.fields.depositorName.slice(0, 40),
+      participantType,
       amount: details.amount,
       paymentReported: true,
       privacyConsent: true,
-      consentVersion: "2026-09-04-v1",
+      consentVersion: "2026-09-07-v2",
       createdAt: client.serverTimestamp(),
       clientTimezone: String(payload.client.timezone || "").slice(0, 80),
       source: "public_web",
@@ -773,7 +776,8 @@
     setText("#ticket-date", event.dateLabel);
     setText("#ticket-time", event.time);
     setText("#ticket-venue", event.venue);
-    setText("#ticket-price", event.priceLabel);
+    const price = usesManualTransfer ? feeSummary(event) || event.priceLabel : event.priceLabel;
+    setText("#ticket-price", price);
     setText("#ticket-capacity", `정원 ${event.capacity}명`);
     setText("#about-intro", event.aboutIntro || event.description);
     setText("#program-description", event.programDescription || "회차별 프로그램을 확인해 주세요.");
@@ -787,7 +791,7 @@
     setText("#summary-event", `${event.quarter} 네트워킹 데이`);
     setText("#summary-date", displayDate);
     setText("#summary-venue", event.venue);
-    setText("#summary-price", event.priceLabel);
+    setText("#summary-price", price);
     setText("#summary-registration-deadline", formatDeadline(event.registrationDeadline));
     setText(
       "#location-note",
@@ -860,7 +864,7 @@
       setText("#bank-name", bank.bankName || "연결 준비 중");
       setText("#bank-account-number", bank.accountNumber || "연결 준비 중");
       setText("#bank-account-holder", bank.accountHolder || "연결 준비 중");
-      setText("#bank-transfer-amount", bank.amount > 0 ? formatWon(bank.amount) : "금액 준비 중");
+      updateParticipantFee();
       setText(
         "#refund-deadline-copy",
         bank.refundDeadlineLabel
@@ -955,6 +959,7 @@
     });
     if (payment) {
       const data = formPayload();
+      updateParticipantFee();
       setText("#transfer-review", `${data.fields.name} · ${data.fields.phone}`);
       setText("#bank-depositor-name", data.fields.depositorName);
     }
@@ -1018,10 +1023,10 @@
       placeholder.defaultSelected = true;
       placeholder.selected = true;
       control.append(placeholder);
-      field.options.forEach((optionLabel) => {
+      field.options.forEach((item) => {
         const option = document.createElement("option");
-        option.value = optionLabel;
-        option.textContent = optionLabel;
+        option.value = typeof item === "string" ? item : item.value;
+        option.textContent = typeof item === "string" ? item : item.label;
         control.append(option);
       });
     } else if (field.type === "textarea") {
@@ -1046,6 +1051,14 @@
     error.setAttribute("aria-live", "polite");
 
     wrapper.append(label, control);
+    if (field.name === "participantType") {
+      const fee = document.createElement("small");
+      fee.id = "participant-fee";
+      fee.setAttribute("aria-live", "polite");
+      control.setAttribute("aria-describedby", `participant-fee error-${field.name}`);
+      control.addEventListener("change", updateParticipantFee);
+      wrapper.append(fee);
+    }
 
     if (field.maxLength && field.type === "textarea") {
       const counter = document.createElement("span");
@@ -1070,6 +1083,14 @@
     elements.fields.replaceChildren();
     config.form.fields.forEach((field) => elements.fields.append(createField(field)));
     setText("#privacy-summary", config.form.privacySummary);
+  }
+
+  function updateParticipantFee() {
+    const type = valueFromForm(elements.form, "participantType");
+    const amount = participantAmount(state.event, type);
+    setText("#participant-fee", amount ? `${participantLabel(type)} 참가비 ${formatWon(amount)}` : "참가 구분을 선택해 주세요.");
+    setText("#bank-transfer-amount", amount ? formatWon(amount) : "참가 구분을 선택해 주세요");
+    setText("#bank-participant-type", participantLabel(type) || "—");
   }
 
   function validationMessage(control) {
@@ -1210,7 +1231,7 @@
       const selectedEvent = clone(state.event);
       state.submitting = true;
       elements.form.setAttribute("aria-busy", "true");
-      $$("input, button", elements.form).forEach(control => { control.disabled = true; });
+      $$("input, select, textarea, button", elements.form).forEach(control => { control.disabled = true; });
       $$("button", elements.quarterTabs).forEach(control => { control.disabled = true; });
       elements.submit.textContent = "신청 중…";
 
@@ -1226,7 +1247,7 @@
       } finally {
         state.submitting = false;
         elements.form.removeAttribute("aria-busy");
-        $$("input, button", elements.form).forEach(control => { control.disabled = false; });
+        $$("input, select, textarea, button", elements.form).forEach(control => { control.disabled = false; });
         $$("button", elements.quarterTabs).forEach(control => { control.disabled = false; });
         if (effectiveStatus(state.event) !== "open") updateEventContent();
         else elements.submit.textContent = submitLabelForMode();
@@ -1292,6 +1313,8 @@
     renderResultRows([
       ["회차", state.event.quarter],
       ["신청자", payload.fields.name || "—"],
+      ["참가 구분", participantLabel(payload.fields.participantType)],
+      ["참가비", formatWon(participantAmount(state.event, payload.fields.participantType))],
       ["입금자명", payload.fields.depositorName || "—"],
       ["현재 상태", "신청 접수 완료 · 입금 확인 중"],
       ["신청번호", registrationId],

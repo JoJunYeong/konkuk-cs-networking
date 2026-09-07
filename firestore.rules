@@ -23,14 +23,48 @@ service cloud.firestore {
       return /databases/$(database)/documents/registrations/$(registrationId);
     }
 
-    function manualRegistrationOpen(eventId, amount) {
+    function validFee(amount) {
+      return amount is int && amount > 0 && amount <= 1000000;
+    }
+
+    function validFeeSchedule(amounts) {
+      return amounts is map
+        && amounts.keys().hasAll(['student', 'graduate'])
+        && amounts.keys().hasOnly(['student', 'graduate'])
+        && validFee(amounts.student) && validFee(amounts.graduate);
+    }
+
+    function registrationFeeMatches(data, gate) {
+      return gate.keys().hasAny(['paymentAmounts'])
+        ? validFeeSchedule(gate.paymentAmounts)
+          && data.keys().hasAll(['participantType'])
+          && data.participantType in ['student', 'graduate']
+          && data.amount == gate.paymentAmounts[data.participantType]
+        : data.amount == gate.amount
+          && (!data.keys().hasAny(['participantType']) || data.participantType in ['student', 'graduate']);
+    }
+
+    function validGateFees(data) {
+      return !data.keys().hasAny(['paymentAmounts'])
+        || (data.paymentAmounts is map
+          && data.paymentAmounts.keys().hasAll(['student', 'graduate'])
+          && data.paymentAmounts.keys().hasOnly(['student', 'graduate'])
+          && data.paymentAmounts.student is int
+          && data.paymentAmounts.graduate is int
+          && data.paymentAmounts.student >= 0 && data.paymentAmounts.student <= 1000000
+          && data.paymentAmounts.graduate >= 0 && data.paymentAmounts.graduate <= 1000000
+          && (data.accepting != true || validFeeSchedule(data.paymentAmounts)));
+    }
+
+    function manualRegistrationOpen(data) {
+      let eventId = data.eventId;
       return eventId is string
         && eventId.matches('^[0-9]{4}-Q[1-4]$')
         && exists(registrationGatePath(eventId))
         && get(registrationGatePath(eventId)).data.accepting == true
         && registrationDeadlineOpen(get(registrationGatePath(eventId)).data)
         && get(registrationGatePath(eventId)).data.mode == 'manual_transfer'
-        && get(registrationGatePath(eventId)).data.amount == amount;
+        && registrationFeeMatches(data, get(registrationGatePath(eventId)).data);
     }
 
     function validRegistrationDeadline(data) {
@@ -57,20 +91,21 @@ service cloud.firestore {
     // accepting=true인 자체 계좌이체 회차에만 생성할 수 있습니다.
     match /registrationGates/{eventId} {
       allow read, delete: if isAdmin();
-      allow create, update: if isAdmin() && validRegistrationDeadline(request.resource.data);
+      allow create: if isAdmin() && validRegistrationDeadline(request.resource.data)
+        && validGateFees(request.resource.data);
+      allow update: if isAdmin() && validRegistrationDeadline(request.resource.data)
+        && validGateFees(request.resource.data)
+        && (!resource.data.keys().hasAny(['paymentAmounts']) || request.resource.data.keys().hasAll(['paymentAmounts']));
     }
 
     match /registrations/{registrationId} {
       allow create: if validRegistrationId(registrationId)
         && request.resource.data.keys().hasOnly([
           'eventId', 'eventQuarter', 'status', 'name', 'phone', 'phoneDigits',
-          'depositorName', 'amount', 'paymentReported', 'privacyConsent',
+          'depositorName', 'participantType', 'amount', 'paymentReported', 'privacyConsent',
           'consentVersion', 'createdAt', 'clientTimezone', 'source'
         ])
-        && manualRegistrationOpen(
-          request.resource.data.eventId,
-          request.resource.data.amount
-        )
+        && manualRegistrationOpen(request.resource.data)
         && validShortString(request.resource.data.eventQuarter, 40)
         && request.resource.data.status == 'payment_reported'
         && validShortString(request.resource.data.name, 40)

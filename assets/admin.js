@@ -24,6 +24,7 @@ import {
 const runtime = window.KU_ADMIN_FIREBASE;
 const sourceConfig = window.NETWORKING_SITE_CONFIG;
 const { deadlineMillis, deadlinePassed, effectiveStatus, toInputValue, fromInputValue, formatDeadline } = window.KURegistrationTime;
+const { participantTypes, participantLabel, validFee, hasSeparateFees, feeAmounts, feesReady, feeSummary } = window.KURegistrationFees;
 
 if (!runtime?.firebase?.projectId || !sourceConfig?.events) {
   document.body.innerHTML = "<main style='padding:40px'>관리자 설정 파일을 확인해 주세요.</main>";
@@ -220,13 +221,11 @@ function eventRegistrationMode(event) {
 }
 
 function bankTransferReady(event) {
-  const amount = Number(event?.paymentAmount);
   return Boolean(
     String(event?.bankName || "").trim()
     && String(event?.bankAccountHolder || "").trim()
     && String(event?.bankAccountNumber || "").trim()
-    && Number.isInteger(amount)
-    && amount > 0,
+    && feesReady(event),
   );
 }
 
@@ -243,13 +242,14 @@ async function writeEventsAndGates(events) {
     transaction.set(documentRef("events"), { payload: serialized, updatedAt: serverTimestamp(), updatedBy: runtime.adminUsername });
     events.forEach((event) => {
       const mode = eventRegistrationMode(event);
-      const amount = Number(event.paymentAmount);
+      const amounts = feeAmounts(event);
       const deadline = deadlineMillis(event.registrationDeadline);
       transaction.set(doc(db, "registrationGates", event.id), {
         eventId: event.id,
         eventQuarter: String(event.quarter || event.id).slice(0, 40),
         mode,
-        amount: Number.isInteger(amount) && amount > 0 ? amount : 0,
+        amount: amounts.student === amounts.graduate ? amounts.student : 0,
+        paymentAmounts: amounts,
         capacity: Math.max(1, Number(event.capacity) || 1),
         accepting: event.status === "open" && mode === "manual_transfer" && bankTransferReady(event),
         registrationDeadline: deadline === null ? null : Timestamp.fromMillis(deadline),
@@ -387,7 +387,7 @@ async function importPreviousEvent() {
     // Only reusable settings are copied; the target quarter and its reception dates stay intact.
     [
       "titleLineOne", "titleLineTwo", "description", "notice", "time", "venue", "locationNotice",
-      "priceLabel", "capacity", "paymentAmount", "bankName", "bankAccountHolder", "bankAccountNumber",
+      "priceLabel", "capacity", "paymentAmount", "paymentAmounts", "bankName", "bankAccountHolder", "bankAccountNumber",
       "applicationCopy", "aboutIntro", "quote", "programDescription",
     ].forEach((field) => {
       if (source[field] !== undefined) target[field] = clone(source[field]);
@@ -487,7 +487,7 @@ function renderEventDraft() {
   const draft = {
     ...currentEvent(), status: value(form, "status"), registrationDeadline: deadline,
     bankName: value(form, "bankName"), bankAccountHolder: value(form, "bankAccountHolder"),
-    bankAccountNumber: value(form, "bankAccountNumber"), paymentAmount: Number(value(form, "paymentAmount")),
+    bankAccountNumber: value(form, "bankAccountNumber"), paymentAmounts: feesFromForm(),
     registrationMode: value(form, "registrationMode"), registrationUrl: value(form, "registrationUrl"),
   };
   const status = effectiveStatus(draft);
@@ -531,7 +531,7 @@ function renderEventForm() {
     "id", "quarter", "sequence", "status", "statusLabel", "titleLineOne", "titleLineTwo",
     "description", "notice", "dateLabel", "time", "venue", "locationNotice", "priceLabel",
     "capacity", "registrationUrl", "bankName", "bankAccountHolder", "bankAccountNumber",
-    "paymentAmount", "refundDeadlineLabel", "applicationLabel", "applicationCopy", "aboutIntro", "quote", "programDescription",
+    "refundDeadlineLabel", "applicationLabel", "applicationCopy", "aboutIntro", "quote", "programDescription",
   ].forEach((name) => setValue(elements.eventForm, name, event[name]));
   setValue(elements.eventForm, "registrationMode", eventRegistrationMode(event));
   setValue(
@@ -540,7 +540,8 @@ function renderEventForm() {
     event.registrationProvider || sourceConfig.registration?.provider || "onoffmix",
   );
   setValue(elements.eventForm, "featured", event.featured);
-  setValue(elements.eventForm, "paymentAmount", Number(event.paymentAmount) > 0 ? event.paymentAmount : "");
+  const amounts = feeAmounts(event);
+  participantTypes.forEach((type) => setValue(elements.eventForm, `${type}PaymentAmount`, amounts[type] || ""));
   setValue(elements.eventForm, "registrationDeadline", toInputValue(event.registrationDeadline));
   elements.eventForm.elements.registrationDeadline.setCustomValidity(
     event.registrationDeadline && !Number.isFinite(deadlineMillis(event.registrationDeadline)) ? "접수 마감 날짜와 시간을 다시 설정해 주세요." : "",
@@ -561,6 +562,10 @@ function updateRegistrationModeFields() {
   });
 }
 
+function feesFromForm() {
+  return Object.fromEntries(participantTypes.map((type) => [type, Number(value(elements.eventForm, `${type}PaymentAmount`))]));
+}
+
 function collectEventForm() {
   const event = currentEvent();
   if (!event) return;
@@ -575,7 +580,9 @@ function collectEventForm() {
     event[name] = value(elements.eventForm, name);
   });
   event.capacity = Number(elements.eventForm.elements.capacity.value) || 1;
-  event.paymentAmount = Number(elements.eventForm.elements.paymentAmount.value) || 0;
+  event.paymentAmounts = feesFromForm();
+  event.paymentAmount = event.paymentAmounts.student === event.paymentAmounts.graduate ? event.paymentAmounts.student : 0;
+  if (eventRegistrationMode(event) === "manual_transfer" && feesReady(event)) event.priceLabel = feeSummary(event);
   event.featured = elements.eventForm.elements.featured.checked;
   event.agenda = collectAgendaRows();
   event.registrationDeadline = fromInputValue(value(elements.eventForm, "registrationDeadline"));
@@ -624,6 +631,7 @@ function addEvent() {
     bankAccountHolder: "",
     bankAccountNumber: "",
     paymentAmount: 0,
+    paymentAmounts: { student: 0, graduate: 0 },
     refundDeadlineLabel: "추후 공개",
     registrationDeadline: null,
     locationNotice: "정확한 장소는 신청·결제 완료자에게 운영자가 별도로 안내합니다.",
@@ -700,11 +708,14 @@ function validateEvents() {
       if (event.bankAccountNumber && !/^\d{8,20}$/.test(accountDigits)) {
         throw new Error(`${event.quarter} 계좌번호를 확인해 주세요.`);
       }
-      if (event.paymentAmount && (!Number.isInteger(event.paymentAmount) || event.paymentAmount < 1 || event.paymentAmount > 1000000)) {
-        throw new Error(`${event.quarter} 입금액을 확인해 주세요.`);
+      const amounts = hasSeparateFees(event) ? event.paymentAmounts : { student: event.paymentAmount || 0, graduate: event.paymentAmount || 0 };
+      for (const type of participantTypes) {
+        if (!amounts || (amounts[type] !== 0 && !validFee(amounts[type]))) {
+          throw new Error(`${event.quarter} ${participantLabel(type)} 참가비를 확인해 주세요.`);
+        }
       }
       if (event.status === "open" && !bankTransferReady(event)) {
-        throw new Error(`${event.quarter} 은행·예금주·계좌번호·입금액을 모두 입력해야 신청을 열 수 있습니다.`);
+        throw new Error(`${event.quarter} 은행·예금주·계좌번호와 재학생·졸업생 참가비를 모두 입력해야 신청을 열 수 있습니다.`);
       }
       if (event.status === "open" && !event.refundDeadlineLabel) {
         throw new Error(`${event.quarter} 환불 요청 마감을 입력해 주세요.`);
@@ -880,7 +891,7 @@ function renderRegistrationRows() {
       || state.registrationFilter === "pending" && isPending(registration)
       || state.registrationFilter === "confirmed" && registration.status === "confirmed"
       || state.registrationFilter === "refund_requested" && state.refunds.get(registration.id)?.status === "refund_requested";
-    const fields = [registration.name, registration.depositorName, registration.phone, registration.phoneDigits, registration.id];
+    const fields = [registration.name, participantLabel(registration.participantType), registration.depositorName, registration.phone, registration.phoneDigits, registration.id];
     return matchesStatus && (!search || fields.some((field) => String(field || "").toLowerCase().replace(/[\s-]/g, "").includes(search)));
   });
   $$('[data-registration-filter]').forEach((button) => {
@@ -922,13 +933,16 @@ function renderRegistrationRows() {
     name.textContent = registration.name || "—";
     const phone = document.createElement("small");
     phone.textContent = registration.phone || registration.phoneDigits || "—";
+    const participant = document.createElement("small");
+    participant.textContent = participantLabel(registration.participantType) || "구분 미수집";
+    participant.dataset.participantType = registration.participantType || "";
     const code = document.createElement("details");
     const codeLabel = document.createElement("summary");
     codeLabel.textContent = "신청번호";
     const codeValue = document.createElement("small");
     codeValue.textContent = registration.id;
     code.append(codeLabel, codeValue);
-    person.append(name, phone, code);
+    person.append(name, participant, phone, code);
     personCell.append(person);
     row.append(personCell);
 
@@ -1408,7 +1422,10 @@ elements.historySelect.addEventListener("change", () => {
 elements.eventForm.addEventListener("submit", saveEvents);
 elements.eventForm.addEventListener("input", (event) => {
   if (event.target.name === "registrationDeadline") event.target.setCustomValidity("");
-  if (event.target.name === "paymentAmount" && Number(event.target.value) > 0) setValue(elements.eventForm, "priceLabel", formatAmount(event.target.value));
+  if (participantTypes.some((type) => event.target.name === `${type}PaymentAmount`)) {
+    const summary = feeSummary({ paymentAmounts: feesFromForm() });
+    if (summary) setValue(elements.eventForm, "priceLabel", summary);
+  }
   markEventDirty();
 });
 elements.eventForm.addEventListener("change", (event) => {

@@ -125,9 +125,10 @@ registration: {
 
 CSS·설정·JavaScript를 바꿔 재배포할 때는 기존 방문자의 GitHub Pages 캐시가 남지 않도록 `index.html`의 `?v=` 배포 버전도 함께 올립니다.
 
-1. 저장소 `Settings → Pages`에서 배포 방식으로 `GitHub Actions`를 사용합니다.
-2. `Publish networking site`가 `main` 변경 및 15분 간격으로 공개 자료를 확인해 필요한 경우 배포합니다. 즉시 갱신이 필요하면 해당 작업을 직접 실행할 수 있습니다.
-3. 배포 URL에서 공유 미리보기, 화면, 신청 문항, 아카이브 개인정보 문구를 확인합니다.
+1. 저장소 `Settings → Pages`에서 `Deploy from a branch`와 `gh-pages`의 루트를 사용합니다.
+2. 승인된 소스에서 `node scripts/build-sharing-preview.mjs <새 폴더>`를 실행합니다. 이미지 생성에는 Python Pillow와 한글 글꼴을 사용합니다. 출력에 `<소스 커밋 SHA> <index.html SHA-256>` 형식의 `build-version.txt`를 넣어 `gh-pages`에 게시합니다.
+3. 맥미니의 `com.zadu.konkuk-networking-pages` 작업이 5분마다 `scripts/refresh-sharing-preview.sh <게시한 소스 커밋 SHA>`를 실행합니다. 작업은 기존 커밋의 공유용 제목·설명·이미지만 갱신합니다. 새 소스 배포가 승인되면 실행 코드와 소스 커밋도 같은 버전으로 갱신합니다.
+4. 배포 URL에서 공유 미리보기, 화면, 신청 문항, 아카이브 개인정보 문구를 확인합니다.
 
 실제 신청 API 키, 결제 Secret, 알림톡 키는 GitHub 저장소나 브라우저 JavaScript에 넣지 않습니다. 자체 계좌이체용 참가자·환불 자료는 공개 `siteData` 문서가 아니라 관리자만 읽는 별도 컬렉션에 저장합니다.
 

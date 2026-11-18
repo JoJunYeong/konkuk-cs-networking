@@ -140,6 +140,30 @@ summary { cursor:pointer; font-size:14px; font-weight:650; min-height:30px; }
 .registration-person details { margin-top:4px; }
 .registration-person summary { min-height:24px; color:var(--muted); font-size:10px; font-weight:400; }
 .registration-person code { font-size:10px; overflow-wrap:anywhere; }
+.participation-badges { display:flex; flex-wrap:wrap; align-items:center; gap:4px; }
+.participation-tier, .participation-place {
+  display:inline-block; width:max-content; max-width:100%; padding:3px 8px; border:1px solid currentColor;
+  border-radius:999px; font-size:11px; line-height:1.4; font-weight:700;
+}
+.tier-bronze { color:#7e4a31; background:#faeee6; }
+.tier-silver { color:#48576b; background:#eef2f7; }
+.tier-gold { color:#745200; background:#fff2bd; }
+.tier-platinum { color:#135f57; background:#e2f5ef; }
+.tier-diamond { color:#3c43a0; background:#eeedff; }
+.participation-place { color:white; }
+.place-1 { background:#835d08; }
+.place-2 { background:#4a596f; }
+.place-3 { background:#865032; }
+.participation-roster { margin-top:18px; }
+.participation-roster-list {
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap:8px; list-style:none; padding:0; margin:12px 0 0;
+}
+.participation-roster-list:empty { margin:0; }
+.participation-roster-list li {
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  padding:10px 12px; border:1px solid var(--line); border-radius:10px;
+}
 .registration-table td .admin-button { margin-top:8px; padding:7px 9px; font-size:11px; }
 .refund-cell { display:grid; gap:6px; }
 .refund-cell small { font-size:11px; color:var(--muted); }

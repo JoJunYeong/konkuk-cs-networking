@@ -121,13 +121,13 @@ registration: {
 
 ## GitHub Pages 배포
 
-이 프로젝트는 빌드 과정이나 패키지 설치가 없는 정적 사이트입니다.
+웹페이지는 정적 파일로 제공됩니다. 배포 작업에서 공개 회차 자료를 읽고 공유용 제목, 설명과 이미지를 포함한 첫 HTML을 만듭니다.
 
 CSS·설정·JavaScript를 바꿔 재배포할 때는 기존 방문자의 GitHub Pages 캐시가 남지 않도록 `index.html`의 `?v=` 배포 버전도 함께 올립니다.
 
-1. 변경 내용을 `main` 브랜치에 push합니다.
-2. 저장소 `Settings → Pages`에서 `Deploy from a branch`, `main`, `/ (root)`를 유지합니다.
-3. 배포 URL에서 데스크톱·모바일 화면, 신청 문항, 아카이브 개인정보 문구를 다시 검수합니다.
+1. 저장소 `Settings → Pages`에서 배포 방식으로 `GitHub Actions`를 사용합니다.
+2. `Publish networking site`가 `main` 변경 및 15분 간격으로 공개 자료를 확인해 필요한 경우 배포합니다. 즉시 갱신이 필요하면 해당 작업을 직접 실행할 수 있습니다.
+3. 배포 URL에서 공유 미리보기, 화면, 신청 문항, 아카이브 개인정보 문구를 확인합니다.
 
 실제 신청 API 키, 결제 Secret, 알림톡 키는 GitHub 저장소나 브라우저 JavaScript에 넣지 않습니다. 자체 계좌이체용 참가자·환불 자료는 공개 `siteData` 문서가 아니라 관리자만 읽는 별도 컬렉션에 저장합니다.
 

@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
-  browserSessionPersistence,
+  browserLocalPersistence,
   connectAuthEmulator,
   getAuth,
   onAuthStateChanged,
@@ -20,6 +20,8 @@ import {
   serverTimestamp,
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+import { participantKey, participationTier, summarizeParticipation } from "./participation.js";
+import { shareImageURL } from "./share-image.js";
 
 const runtime = window.KU_ADMIN_FIREBASE;
 const sourceConfig = window.NETWORKING_SITE_CONFIG;
@@ -76,6 +78,7 @@ if (emulators) {
   connectAuthEmulator(auth, `http://${emulators.authentication[0]}`, { disableWarnings: true });
   connectFirestoreEmulator(db, emulators.firestore[1], Number(emulators.firestore[2]));
 }
+const rememberLogin = setPersistence(auth, browserLocalPersistence).catch(() => {});
 
 const state = {
   events: clone(sourceConfig.events),
@@ -86,6 +89,7 @@ const state = {
   registrations: [],
   refunds: new Map(),
   registrationDataLoaded: false,
+  registrationDataError: false,
   registrationLoading: false,
   registrationSaving: false,
   registrationFilter: "all",
@@ -528,13 +532,14 @@ function renderEventSelect() {
 
 function renderEventForm() {
   const event = currentEvent();
+  renderParticipationRoster("event", event?.id);
   if (!event) {
     elements.eventLoadSummary.textContent = "선택한 회차 자료를 찾지 못했습니다.";
     return;
   }
   [
     "id", "quarter", "sequence", "status", "statusLabel", "titleLineOne", "titleLineTwo",
-    "description", "notice", "dateLabel", "time", "venue", "locationNotice", "priceLabel",
+    "description", "shareImageUrl", "notice", "dateLabel", "time", "venue", "locationNotice", "priceLabel",
     "capacity", "registrationUrl", "bankName", "bankAccountHolder", "bankAccountNumber",
     "refundDeadlineLabel", "applicationLabel", "applicationCopy", "aboutIntro", "quote", "programDescription",
   ].forEach((name) => setValue(elements.eventForm, name, event[name]));
@@ -584,6 +589,9 @@ function collectEventForm() {
   ].forEach((name) => {
     event[name] = value(elements.eventForm, name);
   });
+  const imageUrl = value(elements.eventForm, "shareImageUrl");
+  if (imageUrl) event.shareImageUrl = imageUrl;
+  else delete event.shareImageUrl;
   event.capacity = Number(elements.eventForm.elements.capacity.value) || 1;
   event.paymentAmounts = feesFromForm();
   event.paymentAmount = event.paymentAmounts.student === event.paymentAmounts.graduate ? event.paymentAmounts.student : 0;
@@ -692,6 +700,9 @@ function validateEvents() {
     if (!Number.isFinite(event.capacity) || event.capacity < 1) throw new Error("정원을 확인해 주세요.");
     const deadline = deadlineMillis(event.registrationDeadline);
     if (deadline !== null && !Number.isFinite(deadline)) throw new Error(`${event.quarter} 접수 마감 날짜와 시간을 확인해 주세요.`);
+    if (event.shareImageUrl && !shareImageURL(event.shareImageUrl)) {
+      throw new Error(`${event.quarter} 공유 이미지에 공개 HTTPS 주소를 입력해 주세요.`);
+    }
     if ((event.agenda || []).some((item) => !item.time || !item.title || !/^(?:([01]\d|2[0-3]):[0-5]\d|미정)$/.test(item.time))) {
       throw new Error(`${event.quarter} 진행 순서의 시간과 내용을 확인해 주세요.`);
     }
@@ -888,7 +899,51 @@ function updateSelection() {
   all.indeterminate = selected.length > 0 && selected.length < available.length;
 }
 
+function participationBadge(participant) {
+  const count = participant?.count ?? 0;
+  const tier = participationTier(count);
+  const badge = document.createElement("span");
+  badge.className = "participation-badges";
+  const rank = document.createElement("span");
+  rank.className = `participation-tier tier-${tier.key}`;
+  rank.textContent = `${tier.label} · ${count}회 참여`;
+  if (participant?.place) {
+    const place = document.createElement("span");
+    place.className = `participation-place place-${participant.place}`;
+    place.textContent = `전체 ${participant.place}위`;
+    badge.append(place);
+  }
+  badge.append(rank);
+  return badge;
+}
+
+function renderParticipationRoster(section, eventId, participants = summarizeParticipation(state.registrations)) {
+  const list = $(`#${section}-roster`);
+  const message = $(`#${section}-roster-status`);
+  list.replaceChildren();
+  if (!eventId || !state.registrationDataLoaded) {
+    message.textContent = !eventId ? "선택한 회차가 없습니다."
+      : state.registrationDataError ? "명단을 불러오지 못했습니다."
+      : "명단을 불러오는 중입니다.";
+    return;
+  }
+  for (const participant of participants.values()) {
+    const registration = participant.rounds.get(eventId);
+    if (!registration) continue;
+    const item = document.createElement("li");
+    const name = document.createElement("strong");
+    name.textContent = registration.name || "이름 미기록";
+    item.append(name, participationBadge(participant));
+    list.append(item);
+  }
+  const count = list.childElementCount;
+  message.textContent = count ? `참여 확정 ${count}명 · 배지는 전체 회차 누적 기준` : "이 회차에 저장된 확정 명단이 없습니다.";
+}
+
 function renderRegistrationRows() {
+  const participants = summarizeParticipation(state.registrations);
+  renderParticipationRoster("event", currentEvent()?.id, participants);
+  renderParticipationRoster("history", currentHistory()?.id, participants);
   const all = selectedEventRegistrations();
   const search = $("#registration-search").value.trim().toLowerCase().replace(/[\s-]/g, "");
   const registrations = all.filter((registration) => {
@@ -947,7 +1002,7 @@ function renderRegistrationRows() {
     const codeValue = document.createElement("small");
     codeValue.textContent = registration.id;
     code.append(codeLabel, codeValue);
-    person.append(name, participant, phone, code);
+    person.append(name, participationBadge(participants.get(participantKey(registration))), participant, phone, code);
     personCell.append(person);
     row.append(personCell);
 
@@ -984,7 +1039,11 @@ function renderRegistrationRows() {
 
 async function loadRegistrationData() {
   if (state.registrationLoading) return false;
+  const user = auth.currentUser;
   state.registrationLoading = true;
+  state.registrationDataError = false;
+  renderParticipationRoster("event", currentEvent()?.id);
+  renderParticipationRoster("history", currentHistory()?.id);
   $("#refresh-registrations").disabled = true;
   $("#registration-load-status").textContent = "신청자를 불러오는 중입니다.";
   updateSelection();
@@ -993,6 +1052,7 @@ async function loadRegistrationData() {
       getDocs(collection(db, "registrations")),
       getDocs(collection(db, "refundRequests")),
     ]);
+    if (auth.currentUser !== user) return false;
     state.registrations = registrationSnapshots.docs.map((snapshot) => ({ id: snapshot.id, ...snapshot.data() }));
     state.refunds = new Map(
       refundSnapshots.docs.map((snapshot) => [snapshot.id, { id: snapshot.id, ...snapshot.data() }]),
@@ -1002,6 +1062,9 @@ async function loadRegistrationData() {
     renderRegistrationRows();
     return true;
   } catch (_error) {
+    state.registrationDataError = true;
+    renderParticipationRoster("event", currentEvent()?.id);
+    renderParticipationRoster("history", currentHistory()?.id);
     $("#registration-load-status").textContent = "신청자를 불러오지 못했습니다. 새로고침을 눌러 다시 확인해 주세요.";
     return false;
   } finally {
@@ -1222,6 +1285,7 @@ function renderHistorySelect() {
 
 function renderHistoryForm() {
   const event = currentHistory();
+  renderParticipationRoster("history", event?.id);
   $$('input, textarea', elements.historyForm).forEach((control) => { control.disabled = !event; if (!event) control.value = ""; });
   $("#delete-history").disabled = !event;
   if (!event) return;
@@ -1337,7 +1401,7 @@ async function login(event) {
   setBusy(elements.loginForm, true);
   showLoginMessage("로그인하는 중입니다.");
   try {
-    await setPersistence(auth, browserSessionPersistence);
+    await rememberLogin;
     await signInWithEmailAndPassword(auth, runtime.loginEmail, password);
   } catch (_error) {
     showLoginMessage("아이디 또는 비밀번호를 확인해 주세요.");
@@ -1367,6 +1431,7 @@ function showLogin() {
   state.registrations = [];
   state.refunds = new Map();
   state.registrationDataLoaded = false;
+  state.registrationDataError = false;
   state.eventsDirty = false;
   state.historyDirty = false;
   state.remotePayloads = { events: null, history: null };
@@ -1374,6 +1439,8 @@ function showLogin() {
   elements.historyForm.reset();
   $("#agenda-editor").replaceChildren();
   elements.registrationRows.replaceChildren();
+  renderParticipationRoster("event");
+  renderParticipationRoster("history");
   elements.bankTransactions.value = "";
   elements.dashboard.hidden = true;
   elements.loginPanel.hidden = false;

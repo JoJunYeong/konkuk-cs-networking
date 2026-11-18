@@ -1,0 +1,73 @@
+name: Publish networking site
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "13,28,43,58 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: read
+
+concurrency:
+  group: networking-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    outputs:
+      changed: ${{ steps.preview.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/configure-pages@v5
+        id: pages
+      - name: Test preview and participation
+        run: node --test scripts/test-sharing-preview.mjs scripts/test-participation.mjs
+      - name: Install image renderer dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk python3-pil
+      - name: Build and compare with the published site
+        id: preview
+        env:
+          PREVIEW_PYTHON: /usr/bin/python3
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: |
+          pages_dir="$RUNNER_TEMP/ku-pages"
+          node scripts/build-sharing-preview.mjs "$pages_dir"
+          digest="$(sha256sum "$pages_dir/index.html" | cut -d ' ' -f 1)"
+          version="$GITHUB_SHA $digest"
+          printf '%s\n' "$version" > "$pages_dir/build-version.txt"
+          live_version="$(curl --silent --fail --max-time 15 "${SITE_URL%/}/build-version.txt")" || live_version=""
+          if [[ "$live_version" == "$version" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.preview.outputs.changed == 'true'
+        with:
+          path: ${{ runner.temp }}/ku-pages
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.changed == 'true'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

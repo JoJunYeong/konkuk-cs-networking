@@ -7,12 +7,12 @@
     <meta name="theme-color" content="#147d59" />
     <title>관리자 · KU meet</title>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/admin.css?v=20260907-quarter-copy" />
+    <link rel="stylesheet" href="./assets/admin.css?v=20261118-participation" />
     <script src="./config/site.config.js?v=20260908-countdown"></script>
     <script src="./config/firebase.config.js?v=20260907-meet"></script>
     <script src="./assets/registration-time.js?v=20260908-countdown"></script>
     <script src="./assets/registration-fees.js?v=20260907-fees"></script>
-    <script type="module" src="./assets/admin.js?v=20260908-countdown"></script>
+    <script type="module" src="./assets/admin.js?v=20261118-participation"></script>
   </head>
   <body>
     <a class="skip-link" href="#admin-main">본문으로 건너뛰기</a>
@@ -127,6 +127,7 @@
                     <div class="form-grid form-grid--two"><label><span>회차 이름</span><input name="quarter" required /></label><label><span>참가비 표시</span><input name="priceLabel" required /></label></div>
                     <div class="form-grid form-grid--two"><label><span>제목 첫 줄</span><input name="titleLineOne" required /></label><label><span>제목 둘째 줄</span><input name="titleLineTwo" /></label></div>
                     <label><span>짧은 소개</span><textarea name="description" rows="2"></textarea></label>
+                    <label><span>공유 이미지 주소</span><input name="shareImageUrl" type="url" placeholder="https://" /><small class="field-note">비워두면 회차명과 일정으로 공유 이미지를 만듭니다.</small></label>
                     <label><span>추가 공지</span><input name="notice" placeholder="필요한 경우에만 입력" /></label>
                     <label><span>신청 안내</span><textarea name="applicationCopy" rows="2"></textarea></label>
                     <label><span>모임 소개</span><textarea name="aboutIntro" rows="2"></textarea></label>
@@ -142,11 +143,17 @@
             </div>
             <div class="save-bar"><div><strong id="event-save-state" role="status">변경 사항 없음</strong><small>저장하면 사이트에 반영됩니다.</small></div><div class="save-bar__actions"><button class="admin-button" id="discard-event-changes" type="button" disabled>변경 취소</button><button class="admin-button admin-button--primary" id="save-events" type="submit" disabled>변경 사항 저장</button></div></div>
           </form>
+          <section class="editor-card participation-roster" aria-labelledby="event-roster-heading">
+            <h2 id="event-roster-heading">이 회차 참여자</h2>
+            <p class="field-note" id="event-roster-status" role="status">명단을 불러오는 중입니다.</p>
+            <ul id="event-roster" class="participation-roster-list"></ul>
+          </section>
         </section>
 
         <section class="editor-card" id="registrations-panel" data-admin-panel="registrations" role="tabpanel" aria-labelledby="tab-registrations" hidden>
           <select id="registration-event-select" hidden aria-hidden="true"></select>
           <div class="card-heading"><div><h2>신청자 명단</h2><p id="registration-load-status" role="status">신청자를 불러오는 중입니다.</p></div><button class="admin-button" id="refresh-registrations" type="button">새로고침</button></div>
+          <p class="field-note">참여 배지는 입금이 확인된 회차를 누적해 표시합니다.</p>
           <div class="registration-tools"><label class="search-field"><span class="sr-only">신청자 검색</span><input id="registration-search" type="search" placeholder="이름, 입금자명, 휴대전화, 신청번호 검색" /></label><button class="plain-button" id="clear-registration-filters" type="button" hidden>검색 초기화</button></div>
           <div class="registration-filters" aria-label="신청 상태 필터"><button class="is-active" type="button" data-registration-filter="all" aria-pressed="true">전체</button><button type="button" data-registration-filter="pending" aria-pressed="false">입금 확인 대기</button><button type="button" data-registration-filter="confirmed" aria-pressed="false">참여 확정</button><button type="button" data-registration-filter="refund_requested" aria-pressed="false">환불 요청</button></div>
           <details class="reconciliation-box" id="reconciliation-details"><summary>은행 내역으로 일괄 확인</summary><div class="details-content"><p>은행 내역에서 입금자명과 금액 두 열을 복사해 붙여 넣으세요. 이름과 금액이 한 건씩 일치하는 신청만 선택합니다.</p><label><span class="sr-only">입금 내역</span><textarea id="bank-transactions" rows="4" placeholder="홍길동&#9;10000&#10;김건국&#9;10000"></textarea></label><button class="admin-button" id="match-transactions" type="button">일치하는 신청 찾기</button><small>붙여 넣은 은행 내역은 저장하지 않습니다.</small></div></details>
@@ -162,6 +169,11 @@
             <section class="editor-card"><h2>지난 모임 기록</h2><input name="id" type="hidden" /><div class="form-grid form-grid--three"><label><span>회차</span><input name="sequence" type="number" min="1" required /></label><label><span>날짜</span><input name="date" type="date" required /></label><label><span>참여 인원</span><input name="attendees" type="number" min="0" max="999" required /></label></div><label><span>행사 제목</span><input name="title" required /></label><label><span>장소</span><input name="venue" required /></label><label><span>모임 설명</span><textarea name="summary" rows="3" required></textarea></label><label><span>주요 순서</span><input name="highlights" placeholder="자기소개, 선배 이야기, 자유 대화" /></label><label><span>기록에 남길 내용</span><textarea name="learning" rows="3"></textarea></label><p class="field-note">사이트에 공개됩니다. 참가자 이름·연락처·계좌번호는 적지 마세요.</p></section>
             <div class="save-bar"><div><strong id="history-save-state" role="status">변경 사항 없음</strong><small>저장하면 지난 모임에 반영됩니다.</small></div><button class="admin-button admin-button--primary" id="save-history" type="submit" disabled>기록 저장</button></div>
           </form>
+          <section class="editor-card participation-roster" aria-labelledby="history-roster-heading">
+            <h2 id="history-roster-heading">이 회차 참여자</h2>
+            <p class="field-note" id="history-roster-status" role="status">명단을 불러오는 중입니다.</p>
+            <ul id="history-roster" class="participation-roster-list"></ul>
+          </section>
         </section>
       </section>
     </main>

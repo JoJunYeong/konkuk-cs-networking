@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#147d59" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://jojunyeong.github.io/konkuk-cs-networking/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- sharing-preview:start -->
+    <meta name="description" content="건국대학교 컴퓨터공학과 선후배 모임입니다. 이번 회차 연사는 김훈기, 조경혁, 조준영입니다. · 2026년 11월 27일(금) 19:30 시작 · 22:00 종료 · 강남역 인근" />
+    <meta property="og:title" content="2026 Q4 건국 컴공 네트워킹" />
+    <meta property="og:description" content="건국대학교 컴퓨터공학과 선후배 모임입니다. 이번 회차 연사는 김훈기, 조경혁, 조준영입니다. · 2026년 11월 27일(금) 19:30 시작 · 22:00 종료 · 강남역 인근" />
+    <meta property="og:image" content="https://jojunyeong.github.io/konkuk-cs-networking/assets/share-preview-395814f2f7d0.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:title" content="2026 Q4 건국 컴공 네트워킹" />
+    <meta name="twitter:description" content="건국대학교 컴퓨터공학과 선후배 모임입니다. 이번 회차 연사는 김훈기, 조경혁, 조준영입니다. · 2026년 11월 27일(금) 19:30 시작 · 22:00 종료 · 강남역 인근" />
+    <meta name="twitter:image" content="https://jojunyeong.github.io/konkuk-cs-networking/assets/share-preview-395814f2f7d0.png" />
+    <!-- sharing-preview:end -->
+    <link rel="canonical" href="https://jojunyeong.github.io/konkuk-cs-networking/" />
+    <title>건국 컴공 네트워킹 · KU meet</title>
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260908-signup-autofill" />
+    <script src="./config/site.config.js?v=20260908-countdown"></script>
+    <script src="./config/firebase.config.js?v=20260907-meet"></script>
+    <script src="./assets/registration-time.js?v=20260908-countdown"></script>
+    <script src="./assets/registration-fees.js?v=20260907-fees"></script>
+    <script defer src="./assets/app.js?v=20260908-signup-autofill"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+
+    <div class="preview-banner" id="preview-banner" hidden>
+      <div class="page-shell preview-banner__inner">
+        <p><strong id="banner-title">신청 준비 중</strong> <span id="banner-copy">참여신청 링크를 연결하고 있습니다. 이 페이지에서는 개인정보를 받지 않습니다.</span></p>
+        <button class="text-button text-button--light" id="open-customizer" type="button">
+          화면에서 커스텀
+        </button>
+      </div>
+    </div>
+
+    <header class="site-header" id="top">
+      <div class="page-shell site-header__inner">
+        <a class="brand" href="#top" aria-label="KU CSE Quarterly Network 홈">
+          <span class="brand__mark" aria-hidden="true">
+            <span>K</span>
+            <small>CSE</small>
+          </span>
+          <span class="brand__copy">
+            <strong id="brand-name">KU meet</strong>
+            <small>건국 컴공 네트워킹</small>
+          </span>
+        </a>
+
+        <nav class="desktop-nav" aria-label="주요 메뉴">
+          <a href="#about">모임 소개</a>
+          <a href="#program">이번 일정</a>
+          <a href="#archive">지난 모임</a>
+          <a href="#faq">자주 묻는 질문</a>
+        </nav>
+
+        <a class="button button--small button--ink header-cta" id="header-cta" href="#apply">참여신청</a>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="floating-marks" id="floating-marks" aria-hidden="true"></div>
+
+        <div class="page-shell hero__inner">
+          <div class="hero__main">
+            <div class="hero__eyebrow-row">
+              <p class="eyebrow" id="event-eyebrow">2026 Q3 · 선후배 모임</p>
+              <span class="status-pill" id="event-status">신청 준비 중</span>
+            </div>
+
+            <h1 id="hero-title">
+              <span id="hero-title-line-one">건국 컴공</span>
+              <span class="hero__accent" id="hero-title-line-two">네트워킹</span>
+            </h1>
+
+            <p class="hero__lead" id="hero-description">
+              건국대학교 컴퓨터공학과 선후배 모임입니다.
+            </p>
+
+            <section class="registration-highlight" aria-label="접수 현황">
+              <div class="deadline-card" id="registration-deadline">
+                <span class="registration-highlight__label">접수 마감</span>
+                <strong class="deadline-card__badge" id="deadline-dday">일정 확인 중</strong>
+                <p id="deadline-countdown" role="timer" aria-live="off"></p>
+                <p class="deadline-card__date"><time id="deadline-date"></time><span>한국 시간</span></p>
+              </div>
+              <div class="registration-count-card" id="registration-count-card">
+                <span class="registration-highlight__label">현재 신청</span>
+                <p class="registration-count-card__number" aria-live="polite" aria-atomic="true"><strong id="registration-count">—</strong><span>명</span></p>
+                <p id="registration-count-capacity"></p>
+                <p class="registration-count-card__note" id="registration-count-note">신청 인원 확인 중</p>
+              </div>
+            </section>
+
+            <div class="hero__actions">
+              <a class="button button--accent" id="primary-cta" href="#apply">참여신청하기</a>
+              <button class="button button--line" id="share-button" type="button">링크 공유</button>
+            </div>
+
+            <p class="hero__notice" id="hero-notice" hidden></p>
+          </div>
+
+          <aside class="event-ticket" aria-label="이번 분기 행사 정보">
+            <div class="event-ticket__topline">
+              <span id="ticket-quarter">2026 Q3</span>
+              <span>행사 안내</span>
+            </div>
+            <div class="event-ticket__number" id="ticket-number">03</div>
+            <div class="event-ticket__details">
+              <div>
+                <span>날짜</span>
+                <strong id="ticket-date">2026년 9월 17일(목)</strong>
+              </div>
+              <div>
+                <span>시간</span>
+                <strong id="ticket-time">19:00 시작 · 22:00 종료</strong>
+              </div>
+              <div>
+                <span>장소</span>
+                <strong id="ticket-venue">홍대입구 인근</strong>
+              </div>
+              <div>
+                <span>참가비</span>
+                <strong id="ticket-price">재학생 5,000원 · 졸업생 10,000원</strong>
+              </div>
+            </div>
+            <div class="event-ticket__footer">
+              <span id="ticket-capacity">정원 100명</span>
+              <span>편입생 · 재학생 · 졸업생</span>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="registration-path" id="registration-path" aria-label="참가 신청 진행 순서">
+        <div class="page-shell registration-path__inner">
+          <div class="registration-path__intro">
+            <strong>신청 방법</strong>
+          </div>
+          <ol class="registration-path__steps">
+            <li><span>1</span><strong id="flow-info-title">신청자 정보</strong><small>이름 · 연락처 · 참가 구분</small></li>
+            <li><span>2</span><strong id="flow-payment-title">참가비 입금</strong><small id="flow-payment-copy">안내된 계좌로 직접 송금</small></li>
+            <li><span>3</span><strong id="flow-notice-title">입금완료 버튼</strong><small id="flow-notice-copy">입금 내역은 운영자가 확인합니다.</small></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="about section" id="about" aria-labelledby="about-heading">
+        <div class="page-shell about__grid">
+          <div class="section-heading section-heading--sticky">
+            <h2 id="about-heading">모임 소개</h2>
+          </div>
+
+          <div class="about__content">
+            <p class="about__intro" id="about-intro">
+              자기소개, 선배 이야기, 자유 대화 순서로 진행합니다.
+            </p>
+            <div class="value-grid" id="value-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="quarter-switcher" aria-labelledby="quarter-heading">
+        <div class="page-shell">
+          <div class="section-heading section-heading--inline">
+            <div>
+              <h2 id="quarter-heading">회차별 일정</h2>
+            </div>
+            <p>회차를 누르면 상세 일정이 바뀝니다.</p>
+          </div>
+          <div class="quarter-tabs" id="quarter-tabs" role="group" aria-label="행사 회차 선택"></div>
+        </div>
+      </section>
+
+      <section class="program section section--ink" id="program" aria-labelledby="program-heading">
+        <div class="page-shell">
+          <div class="section-heading section-heading--light section-heading--inline">
+            <div>
+              <h2 id="program-heading">진행 순서</h2>
+            </div>
+            <p id="program-description">19:00부터 22:00까지 진행합니다.</p>
+          </div>
+
+          <ol class="timeline" id="timeline"></ol>
+        </div>
+      </section>
+
+      <section class="audience section" aria-labelledby="audience-heading">
+        <div class="page-shell audience__grid">
+          <div class="audience__card">
+            <h2 id="audience-heading">참여 대상</h2>
+            <ul class="check-list" id="audience-list"></ul>
+          </div>
+          <div class="audience__quote">
+            <h3>현장 안내</h3>
+            <p id="event-quote">도착하는 순서대로 스터디룸 자리에 랜덤으로 착석합니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="apply section" id="apply" aria-labelledby="apply-heading">
+        <div class="page-shell apply__grid">
+          <div class="apply__summary">
+            <h2 id="apply-heading">참여 신청</h2>
+            <p id="apply-copy">신청자 정보를 입력하고 참가비를 입금한 뒤, 입금완료 버튼을 눌러주세요.</p>
+
+            <dl class="summary-list">
+              <div>
+                <dt>행사</dt>
+                <dd id="summary-event">2026 Q3 네트워킹 데이</dd>
+              </div>
+              <div>
+                <dt>일정</dt>
+                <dd id="summary-date">2026년 9월 17일(목)</dd>
+              </div>
+              <div>
+                <dt>장소</dt>
+                <dd id="summary-venue">홍대입구 인근</dd>
+              </div>
+              <div>
+                <dt>참가비</dt>
+                <dd id="summary-price">재학생 5,000원 · 졸업생 10,000원</dd>
+              </div>
+              <div>
+                <dt>접수 마감</dt>
+                <dd id="summary-registration-deadline"><strong class="deadline-inline" id="summary-deadline-dday"></strong><time id="summary-deadline-date">—</time></dd>
+              </div>
+              <div id="summary-count-row">
+                <dt>현재 신청</dt>
+                <dd id="summary-registration-count">확인 중</dd>
+              </div>
+            </dl>
+
+            <div class="flow-note">
+              <span>정보 입력</span>
+              <i aria-hidden="true">→</i>
+              <span>계좌이체</span>
+              <i aria-hidden="true">→</i>
+              <span>신청 완료</span>
+            </div>
+            <p class="location-note" id="location-note">정확한 장소는 참여신청 완료자에게 별도로 안내합니다.</p>
+          </div>
+
+          <div class="form-card">
+            <div class="managed-registration" id="managed-registration" hidden>
+              <div class="managed-registration__topline">
+                <span>MANAGED REGISTRATION</span>
+                <span class="provider-status" id="provider-status">연결 준비 중</span>
+              </div>
+              <div class="managed-registration__body">
+                <p class="eyebrow eyebrow--dark" id="provider-name">온오프믹스</p>
+                <h3 id="provider-heading">신청과 결제를 한 번에 완료하세요.</h3>
+                <p class="managed-registration__lead">
+                  참가자 정보와 결제는 외부 행사 플랫폼에서 안전하게 처리합니다. 이 사이트에는 개인정보나 카드 정보를 입력하지 않습니다.
+                </p>
+                <ul class="managed-registration__benefits">
+                  <li><strong>자동 확인</strong><span>결제가 끝나면 신청 상태에 바로 반영됩니다.</span></li>
+                  <li><strong>한곳에서 관리</strong><span>신청 내역, 취소와 환불 상태를 함께 확인합니다.</span></li>
+                  <li><strong>확정자 공지</strong><span>운영자가 장소와 입장 안내를 이메일·문자로 보냅니다.</span></li>
+                </ul>
+                <a class="button button--accent button--full" id="provider-cta" href="#apply" aria-disabled="true">
+                  신청 링크 준비 중
+                </a>
+                <p class="managed-registration__footnote" id="provider-footnote">
+                  일정·참가비·환불 기준을 확정한 뒤 신청 링크가 열립니다.
+                </p>
+              </div>
+            </div>
+            <div class="form-card__status" id="form-status" role="status" aria-live="polite"></div>
+            <section class="registration-receipt" id="registration-receipt" hidden aria-labelledby="receipt-title" tabindex="-1">
+              <span class="receipt-check" aria-hidden="true">✓</span>
+              <h3 id="receipt-title">신청이 접수되었습니다.</h3>
+              <p>입금 확인 후 입력한 연락처로 참여 확정과 장소를 안내합니다.</p>
+              <span class="receipt-status">신청 접수 완료 · 입금 확인 중</span>
+              <div class="receipt-id"><span>이 브라우저에 저장된 신청번호</span><strong id="receipt-registration-id"></strong></div>
+              <button class="button button--accent button--full" id="copy-receipt-id" type="button">신청번호 복사</button>
+              <button class="text-button" id="new-registration" type="button">다른 참가자 신청하기</button>
+              <small>이 화면은 신청 접수 내역입니다. 이후 입금 확인 결과는 운영자가 별도로 안내합니다.</small>
+            </section>
+            <form id="registration-form" novalidate>
+              <ol class="form-progress" aria-label="참여신청 단계">
+                <li id="progress-info" aria-current="step"><span>1</span>참가자 정보</li>
+                <li id="progress-payment"><span>2</span>입금 후 신청 완료</li>
+              </ol>
+              <div id="registration-info-step">
+                <div class="form-heading">
+                  <div><span class="form-step">1 / 2</span><h3 tabindex="-1" id="info-step-title">신청자 정보</h3></div>
+                  <span class="required-note">필수 항목</span>
+                </div>
+                <div class="form-grid" id="dynamic-fields"></div>
+                <fieldset class="consent-group">
+                  <legend>개인정보 동의</legend>
+                  <label class="check-control">
+                    <input type="checkbox" name="privacyConsent" required />
+                    <span><strong>참여신청을 위한 개인정보 수집·이용에 동의합니다.</strong><small id="privacy-summary">행사 신청 확인 및 안내에 사용하며 행사 종료 90일 뒤 파기합니다.</small></span>
+                  </label>
+                </fieldset>
+              </div>
+              <section class="bank-transfer-card" id="bank-transfer-card" aria-labelledby="bank-transfer-title" hidden>
+                <div class="form-heading"><div><span class="form-step">2 / 2</span><h3 id="bank-transfer-title" tabindex="-1">참가비 입금</h3></div></div>
+                <div class="transfer-review" id="transfer-review"></div>
+                <p class="transfer-instruction">아래 계좌로 입금한 뒤 <strong>입금완료</strong> 버튼을 눌러주세요.</p>
+                <dl class="bank-transfer-details">
+                  <div class="bank-amount"><dt>보내실 금액</dt><dd id="bank-transfer-amount" aria-live="polite">—</dd></div>
+                  <div><dt>참가 구분</dt><dd id="bank-participant-type">—</dd></div>
+                  <div><dt>은행</dt><dd id="bank-name">—</dd></div>
+                  <div><dt>계좌번호</dt><dd id="bank-account-number">—</dd></div>
+                  <div><dt>예금주</dt><dd id="bank-account-holder">—</dd></div>
+                  <div><dt>입금자명</dt><dd id="bank-depositor-name">—</dd></div>
+                </dl>
+                <button class="button button--line button--full bank-copy-button" id="copy-bank-account" type="button">계좌번호만 복사</button>
+                <p class="transfer-policy" id="transfer-registration-deadline" hidden></p>
+                <p class="transfer-policy" id="transfer-refund-policy"></p>
+                <p class="transfer-policy">버튼을 누르면 신청이 접수됩니다. 실제 입금 여부는 운영자가 확인합니다.</p>
+              </section>
+              <button class="button button--accent button--full" id="submit-button" type="submit">입금 안내 확인하기</button>
+              <button class="text-button form-back" id="back-to-info" type="button" hidden>← 참가자 정보 수정</button>
+              <p class="form-footnote" id="form-footnote">입금 후 마지막 버튼까지 눌러야 신청이 접수됩니다.</p>
+            </form>
+
+            <details class="refund-request" id="refund-request" hidden>
+              <summary>신청 취소·환불 요청</summary>
+              <form id="refund-form" novalidate>
+                <p>
+                  신청할 때 받은 신청번호와 휴대전화를 확인합니다. 환불 계좌는 환불 처리에만 사용하고
+                  완료 처리할 때 계좌번호를 지웁니다.
+                </p>
+                <div class="form-grid">
+                  <label class="field field--full">
+                    <span class="field__label">신청번호 *</span>
+                    <input name="registrationId" required minlength="32" maxlength="32" pattern="[a-fA-F0-9]{32}" autocomplete="off" />
+                  </label>
+                  <label class="field field--full">
+                    <span class="field__label">신청한 휴대전화 *</span>
+                    <input name="phone" type="tel" required autocomplete="tel" placeholder="010-0000-0000" pattern="^(?:[0-9+ ]|\(|\)|-){9,20}$" />
+                  </label>
+                </div>
+                <div class="form-grid form-grid--refund">
+                  <label class="field field--full">
+                    <span class="field__label">환불 은행 *</span>
+                    <input name="refundBank" required maxlength="30" autocomplete="off" placeholder="예: 국민은행" />
+                  </label>
+                  <label class="field field--full">
+                    <span class="field__label">환불 계좌번호 *</span>
+                    <input name="refundAccount" required inputmode="numeric" autocomplete="off" placeholder="숫자만 입력" />
+                  </label>
+                  <label class="field field--full">
+                    <span class="field__label">예금주 *</span>
+                    <input name="refundAccountHolder" required maxlength="40" autocomplete="off" />
+                  </label>
+                </div>
+                <label class="check-control">
+                  <input name="refundConsent" type="checkbox" required />
+                  <span>
+                    <strong>[필수] 취소·환불 처리 목적의 계좌정보 수집에 동의합니다.</strong>
+                    <small id="refund-deadline-copy">환불 마감과 처리 기준을 확인해 주세요.</small>
+                  </span>
+                </label>
+                <button class="button button--ink button--full" type="submit">취소·환불 요청 보내기</button>
+                <p class="form-footnote" id="refund-status" role="status" aria-live="polite"></p>
+              </form>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="archive section" id="archive" aria-labelledby="archive-heading">
+        <div class="page-shell">
+          <div class="archive__header">
+            <div>
+              <h2 id="archive-heading">지난 모임</h2>
+              <p class="archive__intro">
+                이전 모임의 일정과 참석 기록입니다.
+              </p>
+            </div>
+            <dl class="archive__stats" aria-label="네트워킹 데이 기록 요약">
+              <div>
+                <dt>기록된 회차</dt>
+                <dd id="archive-count">—</dd>
+              </div>
+              <div>
+                <dt>기록상 누적 참석</dt>
+                <dd id="archive-attendance">—</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="archive-list" id="archive-list" aria-live="polite">
+            <p class="archive-list__loading">지난 모임 기록을 불러오는 중입니다.</p>
+          </div>
+          <p class="archive__source" id="archive-source-note">
+            공개된 모임 기록을 기준으로 표시합니다.
+          </p>
+        </div>
+      </section>
+
+      <section class="faq section" id="faq" aria-labelledby="faq-heading">
+        <div class="page-shell faq__grid">
+          <div class="section-heading">
+            <h2 id="faq-heading">자주 묻는 질문</h2>
+          </div>
+          <div class="accordion" id="faq-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="page-shell site-footer__inner">
+        <div>
+          <strong id="footer-brand">KU meet</strong>
+          <p id="footer-note">건국대학교 컴퓨터공학 선후배가 직접 준비하는 비공식 모임입니다.</p>
+        </div>
+        <div class="site-footer__links">
+          <a id="contact-link" href="#" hidden>운영 문의</a>
+          <a href="#archive">지난 기록</a>
+          <a href="#apply">참여신청</a>
+          <a href="./admin.html" rel="nofollow">관리자</a>
+          <button id="footer-share" type="button">링크 공유</button>
+        </div>
+      </div>
+    </footer>
+
+    <a class="mobile-cta" href="#apply" id="mobile-cta">참여신청하기</a>
+
+    <dialog class="modal" id="result-dialog" aria-labelledby="result-title">
+      <button class="modal__close" type="button" data-close-dialog aria-label="닫기">×</button>
+      <div class="modal__icon" aria-hidden="true">✓</div>
+      <p class="eyebrow eyebrow--dark" id="result-eyebrow">PREVIEW CHECK</p>
+      <h2 id="result-title">입력한 내용을 확인했습니다.</h2>
+      <p id="result-copy">지금은 시험 운영 중이라 신청 내용은 저장되지 않았고, 결제와 메시지도 보내지 않았습니다.</p>
+      <div class="modal__summary" id="result-summary"></div>
+      <button class="button button--line button--full" id="copy-registration-id" type="button" hidden>신청번호 복사</button>
+      <button class="button button--ink button--full" type="button" data-close-dialog>확인</button>
+    </dialog>
+
+    <dialog class="customizer" id="customizer-dialog" aria-labelledby="customizer-title">
+      <div class="customizer__header">
+        <div>
+          <p class="eyebrow eyebrow--dark">화면 설정</p>
+          <h2 id="customizer-title">임시로 바꿔보기</h2>
+        </div>
+        <button type="button" data-close-customizer aria-label="커스텀 창 닫기">×</button>
+      </div>
+      <form id="customizer-form">
+        <label>
+          <span>행사 제목</span>
+          <input name="title" type="text" />
+        </label>
+        <div class="customizer__split">
+          <label>
+            <span>날짜</span>
+            <input name="dateLabel" type="text" />
+          </label>
+          <label>
+            <span>시간</span>
+            <input name="time" type="text" />
+          </label>
+        </div>
+        <label>
+          <span>장소</span>
+          <input name="venue" type="text" />
+        </label>
+        <div class="customizer__split">
+          <label>
+            <span>참가비</span>
+            <input name="priceLabel" type="text" />
+          </label>
+          <label>
+            <span>정원</span>
+            <input name="capacity" type="number" min="1" />
+          </label>
+        </div>
+        <div class="customizer__split">
+          <label>
+            <span>포인트 컬러</span>
+            <input name="accent" type="color" />
+          </label>
+          <label>
+            <span>배경 컬러</span>
+            <input name="paper" type="color" />
+          </label>
+        </div>
+        <label>
+          <span>움직이는 여백 마크 · 쉼표로 구분</span>
+          <input name="markLabels" type="text" placeholder="K, KU, CSE" />
+        </label>
+        <label>
+          <span>마크 움직임</span>
+          <select name="markMotion">
+            <option value="lively">활발하게</option>
+            <option value="gentle">살랑살랑</option>
+            <option value="still">멈춤</option>
+          </select>
+        </label>
+        <div class="customizer__actions">
+          <button class="button button--ink" type="submit">미리보기 적용</button>
+          <button class="button button--line" id="copy-config" type="button">설정 JSON 복사</button>
+        </div>
+        <p class="customizer__message" id="customizer-message" role="status" aria-live="polite"></p>
+      </form>
+    </dialog>
+  </body>
+</html>

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#147d59" />
+    <title>관리자 · KU meet</title>
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./assets/admin.css?v=20261118-participation" />
+    <script src="./config/site.config.js?v=20260908-countdown"></script>
+    <script src="./config/firebase.config.js?v=20260907-meet"></script>
+    <script src="./assets/registration-time.js?v=20260908-countdown"></script>
+    <script src="./assets/registration-fees.js?v=20260907-fees"></script>
+    <script type="module" src="./assets/admin.js?v=20261118-participation"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#admin-main">본문으로 건너뛰기</a>
+    <header class="admin-header">
+      <a class="admin-brand" href="./index.html" target="_blank" rel="noopener">
+        <span class="admin-brand__mark" aria-hidden="true">K</span>
+        <span><strong>KU meet</strong><small>관리자</small></span>
+      </a>
+      <a class="plain-link" href="./index.html" target="_blank" rel="noopener">사이트 보기 ↗</a>
+    </header>
+
+    <main id="admin-main" class="admin-main">
+      <section class="login-panel" id="login-panel" aria-labelledby="login-title">
+        <h1 id="login-title">관리자 로그인</h1>
+        <p class="login-copy">행사 설정과 신청자 명단을 관리합니다.</p>
+        <form id="login-form" class="login-form">
+          <label><span>아이디</span><input name="username" autocomplete="username" required /></label>
+          <label><span>비밀번호</span><span class="password-field"><input name="password" type="password" autocomplete="current-password" required /><button type="button" id="toggle-password" aria-pressed="false">보기</button></span></label>
+          <button class="admin-button admin-button--primary" type="submit">로그인</button>
+          <p class="form-message" id="login-message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="dashboard" id="dashboard" hidden aria-labelledby="dashboard-title">
+        <div class="dashboard__heading">
+          <div><h1 id="dashboard-title">행사 관리</h1><p>행사를 선택하고 접수 상태와 신청자를 확인하세요.</p></div>
+          <div class="dashboard__account"><span id="account-name">관리자</span><button class="plain-button" id="logout-button" type="button">로그아웃</button></div>
+        </div>
+        <div class="sync-status" id="sync-status" role="status" aria-live="polite">자료를 불러오는 중입니다.</div>
+
+        <div class="event-context">
+          <label><span>행사 선택</span><select id="event-select"></select></label>
+          <div class="event-context__summary"><span class="status-badge" id="context-status">불러오는 중</span><p id="context-detail"></p><small id="context-deadline"></small></div>
+          <div class="context-actions"><button class="admin-button" id="reload-dashboard" type="button">새로고침</button><button class="admin-button" id="add-event" type="button">+ 새 행사</button></div>
+        </div>
+        <p class="sr-only" id="event-load-summary" aria-live="polite"></p>
+
+        <div class="registration-stats" aria-label="선택한 행사 신청 현황">
+          <button type="button" data-stat-filter="all"><span>전체 신청</span><strong id="stat-total">—</strong><small>신청자 보기 →</small></button>
+          <button type="button" data-stat-filter="pending"><span>입금 확인 대기</span><strong id="stat-pending">—</strong><small>확인할 신청 →</small></button>
+          <button type="button" data-stat-filter="confirmed"><span>참여 확정</span><strong id="stat-confirmed">—</strong><small id="stat-capacity">정원 확인</small></button>
+          <button type="button" data-stat-filter="refund_requested"><span>환불 요청</span><strong id="stat-refunds">—</strong><small>처리할 요청 →</small></button>
+        </div>
+
+        <nav class="admin-tabs" role="tablist" aria-label="관리 항목">
+          <button id="tab-events" class="is-active" role="tab" type="button" data-admin-tab="events" aria-controls="events-panel" aria-selected="true">행사 설정</button>
+          <button id="tab-registrations" role="tab" type="button" data-admin-tab="registrations" aria-controls="registrations-panel" aria-selected="false" tabindex="-1">신청자·입금</button>
+          <button id="tab-history" role="tab" type="button" data-admin-tab="history" aria-controls="history-panel" aria-selected="false" tabindex="-1">지난 모임</button>
+        </nav>
+
+        <section id="events-panel" data-admin-panel="events" role="tabpanel" aria-labelledby="tab-events">
+          <form id="event-form" class="editor-form" novalidate>
+            <input name="id" type="hidden" /><input name="sequence" type="hidden" /><input name="statusLabel" type="hidden" /><input name="applicationLabel" type="hidden" />
+            <div class="event-import" id="previous-event-import" hidden>
+              <div><strong>이전 분기 내용</strong><p class="field-note" id="previous-event-import-help">소개·시간·장소·정원·참가비·계좌·진행 순서를 가져옵니다.</p><p class="event-import__status" id="previous-event-import-status" role="status"></p></div>
+              <button class="admin-button" id="import-previous-event" type="button" aria-describedby="previous-event-import-help">이전 분기 불러오기</button>
+            </div>
+            <div class="editor-layout">
+              <div class="editor-main">
+                <section class="editor-card" aria-labelledby="reception-heading">
+                  <div class="card-heading"><div><h2 id="reception-heading">접수 설정</h2><p>설정을 바꾼 뒤 아래 저장 버튼을 눌러주세요.</p></div></div>
+                  <div class="form-grid form-grid--two">
+                    <label><span>접수 상태</span><select name="status"><option value="upcoming">준비 중</option><option value="open">접수 중</option><option value="closed">마감</option></select></label>
+                    <label><span>접수 마감 일시</span><input name="registrationDeadline" type="datetime-local" step="60" /><small>한국 시간 기준. 비우면 자동 마감하지 않습니다.</small></label>
+                  </div>
+                  <p class="field-note" id="deadline-preview"></p>
+                  <label class="checkbox-label"><input name="featured" type="checkbox" /><span>사이트 첫 화면에 이 행사 표시</span></label>
+                </section>
+
+                <section class="editor-card" aria-labelledby="event-basics-heading">
+                  <div class="card-heading"><div><h2 id="event-basics-heading">행사 정보</h2><p>사이트에 표시할 날짜와 장소입니다.</p></div></div>
+                  <div class="form-grid form-grid--two">
+                    <label><span>행사 날짜 <b aria-hidden="true">*</b></span><input name="dateLabel" required placeholder="2026년 9월 17일(목)" /></label>
+                    <label><span>행사 시간 <b aria-hidden="true">*</b></span><input name="time" required placeholder="19:00 시작 · 22:00 종료" /></label>
+                    <label><span>장소 <b aria-hidden="true">*</b></span><input name="venue" required placeholder="홍대입구 인근" /></label>
+                    <label><span>정원 <b aria-hidden="true">*</b></span><input name="capacity" type="number" min="1" max="999" required /></label>
+                  </div>
+                  <label><span>상세 장소 안내</span><input name="locationNotice" placeholder="정확한 장소는 입금 확인 후 연락처로 안내합니다." /></label>
+                </section>
+
+                <section class="editor-card" aria-labelledby="payment-heading">
+                  <div class="card-heading"><div><h2 id="payment-heading">참가비·입금 계좌</h2><p>계좌이체 신청은 입금 내역을 확인한 뒤 직접 확정합니다.</p></div></div>
+                  <label><span>신청 방식</span><select name="registrationMode"><option value="manual_transfer">계좌이체</option><option value="external">외부 신청 페이지</option></select></label>
+                  <div data-registration-mode-fields="manual_transfer">
+                    <div class="form-grid form-grid--two">
+                      <label><span>재학생 참가비 (원)</span><input name="studentPaymentAmount" type="number" min="1" max="1000000" step="1" /></label>
+                      <label><span>졸업생 참가비 (원)</span><input name="graduatePaymentAmount" type="number" min="1" max="1000000" step="1" /></label>
+                      <label><span>은행</span><input name="bankName" maxlength="30" placeholder="하나은행" /></label>
+                      <label><span>계좌번호</span><input name="bankAccountNumber" maxlength="30" inputmode="numeric" autocomplete="off" /></label>
+                      <label><span>예금주</span><input name="bankAccountHolder" maxlength="40" /></label>
+                    </div>
+                    <label><span>환불 요청 마감 안내</span><input name="refundDeadlineLabel" maxlength="80" placeholder="2026년 9월 7일 23:59" /><small>환불 안내 문구입니다. 접수 마감 일시와는 별도로 관리합니다.</small></label>
+                  </div>
+                  <div data-registration-mode-fields="external" hidden>
+                    <div class="form-grid form-grid--two">
+                      <label><span>신청 플랫폼</span><select name="registrationProvider"><option value="onoffmix">온오프믹스</option><option value="eventus">이벤터스</option><option value="other">기타</option></select></label>
+                      <label><span>신청 링크</span><input name="registrationUrl" type="url" inputmode="url" placeholder="https://" /></label>
+                    </div>
+                    <p class="field-note">외부 사이트의 접수 마감도 해당 사이트에서 설정해 주세요.</p>
+                  </div>
+                </section>
+
+                <section class="editor-card" id="agenda-card" aria-labelledby="agenda-heading">
+                  <div class="card-heading"><div><h2 id="agenda-heading">진행 순서</h2><p>시간과 내용을 입력하고 순서를 조정하세요.</p></div><button class="admin-button" id="add-agenda" type="button">+ 순서 추가</button></div>
+                  <div class="agenda-editor" id="agenda-editor"></div>
+                  <p class="field-note" id="agenda-empty" hidden>등록된 순서가 없습니다. ‘순서 추가’를 눌러 입력하세요.</p>
+                </section>
+
+                <details class="editor-card editor-details" id="event-copy-settings">
+                  <summary>소개 문구·세부 설정</summary>
+                  <div class="details-content">
+                    <div class="form-grid form-grid--two"><label><span>회차 이름</span><input name="quarter" required /></label><label><span>참가비 표시</span><input name="priceLabel" required /></label></div>
+                    <div class="form-grid form-grid--two"><label><span>제목 첫 줄</span><input name="titleLineOne" required /></label><label><span>제목 둘째 줄</span><input name="titleLineTwo" /></label></div>
+                    <label><span>짧은 소개</span><textarea name="description" rows="2"></textarea></label>
+                    <label><span>공유 이미지 주소</span><input name="shareImageUrl" type="url" placeholder="https://" /><small class="field-note">비워두면 회차명과 일정으로 공유 이미지를 만듭니다.</small></label>
+                    <label><span>추가 공지</span><input name="notice" placeholder="필요한 경우에만 입력" /></label>
+                    <label><span>신청 안내</span><textarea name="applicationCopy" rows="2"></textarea></label>
+                    <label><span>모임 소개</span><textarea name="aboutIntro" rows="2"></textarea></label>
+                    <label><span>현장 안내</span><textarea name="quote" rows="2"></textarea></label>
+                    <label><span>진행 순서 안내</span><input name="programDescription" /></label>
+                    <div class="danger-row"><p>신청자가 있는 행사는 삭제할 수 없습니다.</p><button class="admin-button admin-button--danger" id="delete-event" type="button">이 행사 삭제</button></div>
+                  </div>
+                </details>
+              </div>
+              <aside class="editor-aside">
+                <div class="editor-card reception-preview"><h2>저장 후 접수 상태</h2><strong id="draft-status">—</strong><p id="draft-deadline"></p><p class="field-note" id="draft-route"></p><hr /><p class="field-note">접수가 마감돼도 기존 신청자의 입금 확인과 환불 처리는 계속할 수 있습니다.</p></div>
+              </aside>
+            </div>
+            <div class="save-bar"><div><strong id="event-save-state" role="status">변경 사항 없음</strong><small>저장하면 사이트에 반영됩니다.</small></div><div class="save-bar__actions"><button class="admin-button" id="discard-event-changes" type="button" disabled>변경 취소</button><button class="admin-button admin-button--primary" id="save-events" type="submit" disabled>변경 사항 저장</button></div></div>
+          </form>
+          <section class="editor-card participation-roster" aria-labelledby="event-roster-heading">
+            <h2 id="event-roster-heading">이 회차 참여자</h2>
+            <p class="field-note" id="event-roster-status" role="status">명단을 불러오는 중입니다.</p>
+            <ul id="event-roster" class="participation-roster-list"></ul>
+          </section>
+        </section>
+
+        <section class="editor-card" id="registrations-panel" data-admin-panel="registrations" role="tabpanel" aria-labelledby="tab-registrations" hidden>
+          <select id="registration-event-select" hidden aria-hidden="true"></select>
+          <div class="card-heading"><div><h2>신청자 명단</h2><p id="registration-load-status" role="status">신청자를 불러오는 중입니다.</p></div><button class="admin-button" id="refresh-registrations" type="button">새로고침</button></div>
+          <p class="field-note">참여 배지는 입금이 확인된 회차를 누적해 표시합니다.</p>
+          <div class="registration-tools"><label class="search-field"><span class="sr-only">신청자 검색</span><input id="registration-search" type="search" placeholder="이름, 입금자명, 휴대전화, 신청번호 검색" /></label><button class="plain-button" id="clear-registration-filters" type="button" hidden>검색 초기화</button></div>
+          <div class="registration-filters" aria-label="신청 상태 필터"><button class="is-active" type="button" data-registration-filter="all" aria-pressed="true">전체</button><button type="button" data-registration-filter="pending" aria-pressed="false">입금 확인 대기</button><button type="button" data-registration-filter="confirmed" aria-pressed="false">참여 확정</button><button type="button" data-registration-filter="refund_requested" aria-pressed="false">환불 요청</button></div>
+          <details class="reconciliation-box" id="reconciliation-details"><summary>은행 내역으로 일괄 확인</summary><div class="details-content"><p>은행 내역에서 입금자명과 금액 두 열을 복사해 붙여 넣으세요. 이름과 금액이 한 건씩 일치하는 신청만 선택합니다.</p><label><span class="sr-only">입금 내역</span><textarea id="bank-transactions" rows="4" placeholder="홍길동&#9;10000&#10;김건국&#9;10000"></textarea></label><button class="admin-button" id="match-transactions" type="button">일치하는 신청 찾기</button><small>붙여 넣은 은행 내역은 저장하지 않습니다.</small></div></details>
+          <div class="selection-bar"><span id="selection-count">선택 0건</span><button class="admin-button admin-button--primary" id="confirm-selected" type="button" disabled>선택한 신청 입금 확인</button></div>
+          <p class="match-status" id="match-status" role="status" aria-live="polite"></p>
+          <div class="registration-table-wrap"><table class="registration-table"><thead><tr><th scope="col"><label class="select-checkbox"><input id="select-all-registrations" type="checkbox" aria-label="현재 목록의 입금 확인 대기 신청 모두 선택" /></label></th><th scope="col">신청 시각</th><th scope="col">신청자</th><th scope="col">입금자명</th><th scope="col">금액</th><th scope="col">상태</th><th scope="col">환불</th></tr></thead><tbody id="registration-rows"></tbody></table></div>
+          <p class="empty-state" id="registration-empty" hidden>아직 접수된 신청이 없습니다.</p>
+        </section>
+
+        <section id="history-panel" data-admin-panel="history" role="tabpanel" aria-labelledby="tab-history" hidden>
+          <div class="record-toolbar editor-card"><label><span>지난 모임 선택</span><select id="history-select"></select></label><div><button class="admin-button" id="add-history" type="button">+ 기록 추가</button><button class="admin-button admin-button--danger" id="delete-history" type="button">기록 삭제</button></div></div>
+          <form id="history-form" class="editor-form" novalidate>
+            <section class="editor-card"><h2>지난 모임 기록</h2><input name="id" type="hidden" /><div class="form-grid form-grid--three"><label><span>회차</span><input name="sequence" type="number" min="1" required /></label><label><span>날짜</span><input name="date" type="date" required /></label><label><span>참여 인원</span><input name="attendees" type="number" min="0" max="999" required /></label></div><label><span>행사 제목</span><input name="title" required /></label><label><span>장소</span><input name="venue" required /></label><label><span>모임 설명</span><textarea name="summary" rows="3" required></textarea></label><label><span>주요 순서</span><input name="highlights" placeholder="자기소개, 선배 이야기, 자유 대화" /></label><label><span>기록에 남길 내용</span><textarea name="learning" rows="3"></textarea></label><p class="field-note">사이트에 공개됩니다. 참가자 이름·연락처·계좌번호는 적지 마세요.</p></section>
+            <div class="save-bar"><div><strong id="history-save-state" role="status">변경 사항 없음</strong><small>저장하면 지난 모임에 반영됩니다.</small></div><button class="admin-button admin-button--primary" id="save-history" type="submit" disabled>기록 저장</button></div>
+          </form>
+          <section class="editor-card participation-roster" aria-labelledby="history-roster-heading">
+            <h2 id="history-roster-heading">이 회차 참여자</h2>
+            <p class="field-note" id="history-roster-status" role="status">명단을 불러오는 중입니다.</p>
+            <ul id="history-roster" class="participation-roster-list"></ul>
+          </section>
+        </section>
+      </section>
+    </main>
+    <dialog class="action-dialog" id="action-dialog" aria-labelledby="action-title"><h2 id="action-title"></h2><p id="action-message"></p><ul id="action-items"></ul><form method="dialog"><button class="admin-button" value="cancel">취소</button><button class="admin-button admin-button--primary" id="action-confirm" value="confirm">확인</button></form></dialog>
+  </body>
+</html>
